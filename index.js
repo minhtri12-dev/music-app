@@ -15,18 +15,75 @@ const image = document.getElementById('cover'),
 const music = new Audio();
 
 const songs = [
+
+     {
+        path: 'assets/ty1d.mp3',
+        displayName: '我真的很想你',
+        cover: 'assets/6.png',    
+        artist: 'SOUNDCLOUD',
+    },
+
     {
-        path: 'assets/LTAL.mp3',
-        displayName: 'Less Than a Lover',
-        cover: 'assets/Jennie.png',
-        artist: 'JENNIE',
+        path: 'assets/biendaovaem.mp3',
+        displayName: 'BIỂN ĐẢO & EM',
+        cover: 'assets/7.png',    
+        artist: 'SOUNDCLOUD',
+    },
+
+     {
+        path: 'assets/mashup.mp3',
+        displayName: 'PHUNG ĐỘPAMINEZZ',
+        cover: 'assets/5.png',
+        artist: 'SOUNDCLOUD',
+    },
+
+     {
+        path: 'assets/quaduroi.mp3',
+        displayName: 'QUÁ ĐỦ RỒI',
+        cover: 'assets/8.png',
+        artist: 'SOUNDCLOUD',
     },
 
     {
         path: 'assets/NNTCC.mp3',
-        displayName: 'Nếu Như Ta Chẳng Còn',
+        displayName: 'NẾU NHƯ TA CHẲNG CÒN',
         cover: 'assets/2.jpg',
         artist: 'MCK',
+    },
+
+    {
+        path: 'assets/kesaytinh.mp3',
+        displayName: 'KẺ SAY TÌNH',
+        cover: 'assets/9.png',
+        artist: 'QUỐC THIÊN',
+    },
+
+    {
+        path: 'assets/denkhinao.mp3',
+        displayName: '♥',
+        cover: 'assets/ly.png',
+        artist: '☻',
+    },
+
+    {
+        path: 'assets/50F.mp3',
+        displayName: '50 FEET',
+        cover: 'assets/lamine.jpg',
+        artist: 'SOMO',
+    },
+
+    {
+        path: 'assets/vangogh.mp3',
+        displayName: 'VAN GOGH',
+        cover: 'assets/paris.jpg',    
+        artist: 'DEPT Ft AA',
+    },
+
+     {
+        path: 'assets/CRY.mp3',
+        displayName: 'CRY',
+        cover: 'assets/4.png',    
+        artist: 'Cigarettes After Sex',
     },
 
     {
@@ -34,27 +91,6 @@ const songs = [
         displayName: 'Justin Playlist',
         cover: 'assets/3.jpg',
         artist: 'Justin Beiber',
-    },
-
-    {
-        path: 'assets/ILY.mp3',
-        displayName: '...',
-        cover: 'assets/ly.png',
-        artist: '...',
-    },
-
-     {
-        path: 'assets/DOCDOI.mp3',
-        displayName: 'Dốc Đời',
-        cover: 'assets/cr7.png',
-        artist: 'Phạm Kỳ',
-    },
-    
-     {
-        path: 'assets/CRY.mp3',
-        displayName: 'CRY',
-        cover: 'assets/image.png',    
-        artist: 'Cigarettes after S3X',
     },
     
 ];
