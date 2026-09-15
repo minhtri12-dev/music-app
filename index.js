@@ -16,6 +16,20 @@ const music = new Audio();
 
 const songs = [
 
+    {
+        path: 'assets/laviem.mp3',
+        displayName: 'LAVIEM1',
+        cover: 'assets/11.png',    
+        artist: 'SOUNDCLOUD',
+    },
+
+     {
+        path: 'assets/timem.mp3',
+        displayName: 'LAVIEM1',
+        cover: 'assets/10.png',    
+        artist: 'SOUNDCLOUD',
+    },
+
      {
         path: 'assets/ty1d.mp3',
         displayName: '我真的很想你',
