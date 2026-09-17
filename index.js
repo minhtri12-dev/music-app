@@ -18,14 +18,14 @@ const songs = [
 
     {
         path: 'assets/laviem.mp3',
-        displayName: 'LAVIEM1',
+        displayName: 'SUU TAM',
         cover: 'assets/11.png',    
         artist: 'SOUNDCLOUD',
     },
 
      {
         path: 'assets/timem.mp3',
-        displayName: 'LAVIEM1',
+        displayName: 'SUU TAM',
         cover: 'assets/10.png',    
         artist: 'SOUNDCLOUD',
     },
@@ -46,7 +46,7 @@ const songs = [
 
      {
         path: 'assets/mashup.mp3',
-        displayName: 'PHUNG ĐỘPAMINEZZ',
+        displayName: 'SUU TAM',
         cover: 'assets/5.png',
         artist: 'SOUNDCLOUD',
     },
@@ -74,7 +74,7 @@ const songs = [
 
     {
         path: 'assets/denkhinao.mp3',
-        displayName: '♥',
+        displayName: 'SUU TAM',
         cover: 'assets/ly.png',
         artist: '☻',
     },
