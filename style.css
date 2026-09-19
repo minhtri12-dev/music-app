@@ -175,3 +175,58 @@ body {
     -webkit-appearance: none; width: 12px; height: 12px; background: #fff;
     border-radius: 50%; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.8);
 }
+/* =========================================
+   RESPONSIVE CHO ĐIỆN THOẠI (MOBILE FIX)
+========================================= */
+@media screen and (max-width: 600px) {
+    body {
+        padding: 10px;
+        overflow-y: auto; /* Cho phép cuộn trang nếu màn hình quá nhỏ */
+    }
+
+    .app-layout {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    /* Thu nhỏ trình phát nhạc vừa khít màn hình điện thoại */
+    .glass-player {
+        width: 100% !important;
+        max-width: 400px;
+        height: auto !important;
+        min-height: 440px;
+        padding: 20px 10px;
+    }
+
+    /* Thu nhỏ tiêu đề và đĩa CD cho cân đối */
+    .song-title {
+        font-size: 32px !important;
+    }
+
+    .modern-cd {
+        width: 80px !important;
+        height: 80px !important;
+        margin-bottom: 15px;
+    }
+
+    /* Đưa thanh âm lượng xuống dưới hoặc thu gọn lại để không bị đè nút */
+    .controls-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .volume-control {
+        position: relative !important;
+        right: auto !important;
+        width: 100% !important;
+        justify-content: center;
+    }
+
+    /* Xử lý Drawer list nhạc trên điện thoại trùm full màn hình cho dễ bấm */
+    .side-playlist.active {
+        width: 100% !important;
+        max-width: 350px;
+        height: 400px;
+    }
+}
