@@ -18,6 +18,7 @@ const title = document.getElementById('music-title'),
     playlistDrawer = document.getElementById('playlist-drawer'),
     tabBtns = document.querySelectorAll('.tab-btn'),
     mainBg = document.getElementById('main-bg'),
+    mainVideo = document.getElementById('main-video'), // THÊM BIẾN VIDEO
     timerDisplay = document.getElementById('timer-display'),
     cdElement = document.getElementById('cd-element'),
     visualizerBars = document.getElementById('visualizer-bars');
@@ -25,21 +26,26 @@ const title = document.getElementById('music-title'),
 const music = new Audio();
 
 const baseSongs = [
-    { id: 0, path: 'assets/laviem.mp3', displayName: 'SUU TAM', cover: 'assets/4.jpg', artist: 'SoundCloud' },
-    { id: 1, path: 'assets/timem.mp3', displayName: 'SUU TAM', cover: 'assets/2.jpg', artist: 'SoundCloud' },
-    { id: 2, path: 'assets/ty1d.mp3', displayName: 'SUU TAM', cover: 'assets/3.jpg', artist: 'SoundCloud' },
-    { id: 3, path: 'assets/mashup.mp3', displayName: 'SUU TAM', cover: 'assets/5.png', artist: 'SoundCloud' },
-    { id: 4, path: 'assets/biendaovaem.mp3', displayName: 'BIEN DAO & EM', cover: 'assets/7.png', artist: 'SoundCloud' },
-    { id: 5, path: 'assets/amthambenem.mp3', displayName: 'AM THAM BEN EM', cover: 'assets/9.png', artist: 'SoundCloud' },
+    
+    { id: 0, path: 'assets/Full.mp3', displayName: 'PHUNG MCK', artist: 'MCK', bgVideo: 'assets/1.mp4' },
+    { id: 2, path: 'assets/bwine.mp3', displayName: 'VÀI TRACK BWINE', artist: 'BWINE', bgVideo: 'assets/2.mp4' },
+    { id: 3, path: 'assets/3.mp3', displayName: 'PHUNG THE WEEKND', artist: 'THE WEEKND', bgVideo: 'assets/3.mp4' },
+    
+    { id: 1, path: 'assets/laviem.mp3', displayName: 'SUU TAM', cover: 'assets/4.jpg', artist: 'SoundCloud' },
+    { id: 2, path: 'assets/timem.mp3', displayName: 'SUU TAM', cover: 'assets/2.jpg', artist: 'SoundCloud' },
+    { id: 3, path: 'assets/ty1d.mp3', displayName: 'SUU TAM', cover: 'assets/3.jpg', artist: 'SoundCloud' },
+    { id: 4, path: 'assets/mashup.mp3', displayName: 'SUU TAM', cover: 'assets/5.png', artist: 'SoundCloud' },
+    { id: 5, path: 'assets/biendaovaem.mp3', displayName: 'BIEN DAO & EM', cover: 'assets/7.png', artist: 'SoundCloud' },
+    { id: 6, path: 'assets/amthambenem.mp3', displayName: 'AM THAM BEN EM', cover: 'assets/9.png', artist: 'SoundCloud' },
     { id: 7, path: 'assets/quaduroi.mp3', displayName: 'QUA DU ROI', cover: 'assets/6.png', artist: 'SoundCloud' },
-    { id: 6, path: 'assets/anhsairoi.mp3', displayName: 'ANH SAI ROI', cover: 'assets/5.png', artist: 'SoundCloud' },
-    { id: 8, path: 'assets/NNTCC.mp3', displayName: 'NEU NHU TA CHANG CON', cover: 'assets/7.png', artist: 'MCK' },
-    { id: 9, path: 'assets/kesaytinh.mp3', displayName: 'KE SAY TINH', cover: 'assets/8.jpg', artist: 'QUOC THIEN' },
-    { id: 10, path: 'assets/denkhinao.mp3', displayName: '....', cover: 'assets/9.jpg', artist: 'Artist' },
-    { id: 11, path: 'assets/50F.mp3', displayName: '50 Feet', cover: 'assets/10.jpg', artist: 'Somo' },
-    { id: 12, path: 'assets/vangogh.mp3', displayName: 'Van Gogh', cover: 'assets/11.jpg', artist: 'Dept Ft AA' },
-    { id: 13, path: 'assets/CRY.mp3', displayName: 'Cry', cover: 'assets/12.jpg', artist: 'Cigarettes After Sex' },
-    { id: 14, path: 'assets/BAAB.mp3', displayName: 'Justin Playlist', cover: 'assets/13.jpg', artist: 'Justin Bieber' }
+    { id: 8, path: 'assets/anhsairoi.mp3', displayName: 'ANH SAI ROI', cover: 'assets/5.png', artist: 'SoundCloud' },
+    { id: 9, path: 'assets/NNTCC.mp3', displayName: 'NEU NHU TA CHANG CON', cover: 'assets/7.png', artist: 'MCK' },
+    { id: 10, path: 'assets/kesaytinh.mp3', displayName: 'KE SAY TINH', cover: 'assets/8.jpg', artist: 'QUOC THIEN' },
+    { id: 11, path: 'assets/denkhinao.mp3', displayName: '....', cover: 'assets/9.jpg', artist: 'Artist' },
+    { id: 12, path: 'assets/50F.mp3', displayName: '50 Feet', cover: 'assets/10.jpg', artist: 'Somo' },
+    { id: 13, path: 'assets/vangogh.mp3', displayName: 'Van Gogh', cover: 'assets/11.jpg', artist: 'Dept Ft AA' },
+    { id: 14, path: 'assets/CRY.mp3', displayName: 'Cry', cover: 'assets/12.jpg', artist: 'Cigarettes After Sex' },
+    { id: 15, path: 'assets/BAAB.mp3', displayName: 'Justin Playlist', cover: 'assets/13.jpg', artist: 'Justin Bieber' }
 ];
 
 let songs = [];
@@ -99,22 +105,45 @@ function loadMusic(index) {
     
     document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
 
-    if (song.cover) {
+    // ---- LOGIC THÔNG MINH XỬ LÝ BACKGROUND ----
+    if (song.bgVideo) {
+        // 1. NẾU BÀI HÁT CÓ KHAI BÁO bgVideo -> Chạy Video nền
+        mainBg.classList.add('hidden'); // Ẩn ảnh tĩnh
+        mainVideo.classList.add('active'); // Hiện khung video
+        
+        // Kiểm tra tránh load lại nếu video vẫn đang là video đó
+        if (!mainVideo.src.endsWith(song.bgVideo)) {
+            mainVideo.src = song.bgVideo;
+            mainVideo.load();
+            mainVideo.play().catch(e => console.log(e));
+        }
+    } else {
+        // 2. NẾU BÀI HÁT KHÔNG CÓ bgVideo -> Chạy Ảnh tĩnh
+        mainVideo.classList.remove('active'); // Ẩn khung video
+        mainVideo.pause(); // Dừng video cho nhẹ RAM
+        mainBg.classList.remove('hidden'); // Hiện ảnh tĩnh
+
         mainBg.style.opacity = 0; 
         setTimeout(() => {
             const img = new Image();
             img.onload = () => { 
                 mainBg.src = song.cover; 
-                cdElement.style.backgroundImage = `url('${song.cover}')`; // Ép ảnh vào đĩa CD
                 mainBg.style.opacity = 1; 
             };
             img.onerror = () => { 
                 mainBg.src = 'assets/1.jpg'; 
-                cdElement.style.backgroundImage = `url('assets/1.jpg')`; 
                 mainBg.style.opacity = 1; 
             }; 
             img.src = song.cover;
         }, 300); 
+    }
+
+   
+    if (song.cover) {
+        const cdImg = new Image();
+        cdImg.onload = () => { cdElement.style.backgroundImage = `url('${song.cover}')`; };
+        cdImg.onerror = () => { cdElement.style.backgroundImage = `url('assets/music.png')`; };
+        cdImg.src = song.cover;
     }
 
     if(currentTab !== 'settings') renderPlaylist();
@@ -229,6 +258,9 @@ function renderPlaylist() {
         playlistContent.appendChild(item);
     });
 }
+
+// ... GIỮ NGUYÊN PHẦN BÊN DƯỚI (speed-btn, timer, toggle play...) ...
+// Đoạn này là các EventListener cũ không cần thay đổi.
 
 document.querySelectorAll('.speed-btn').forEach(btn => {
     btn.addEventListener('click', () => {

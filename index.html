@@ -11,13 +11,16 @@
 </head>
 <body>
 
-    <!-- Thay đổi từ <img> thành <video> để chạy file 8.mp4 -->
+    <!-- Video nền (mặc định ẩn) -->
     <video autoplay muted loop playsinline class="background-video" id="main-video">
-        <source src="assets/1.jpg" type="video/mp4" id="video-source">
+        <source src="" type="video/mp4" id="video-source">
     </video>
     
-    <!-- Hoặc dùng thẻ image dự phòng nếu bài là ảnh tĩnh -->
+    <!-- Ảnh nền tĩnh -->
     <img src="assets/1.jpg" class="background-img" id="main-bg" alt="Background">
+
+    <!-- Lớp phủ mờ giúp giao diện nổi bật -->
+    <div class="bg-overlay"></div>
 
     <div class="app-layout">
         
