@@ -18,34 +18,36 @@ const title = document.getElementById('music-title'),
     playlistDrawer = document.getElementById('playlist-drawer'),
     tabBtns = document.querySelectorAll('.tab-btn'),
     mainBg = document.getElementById('main-bg'),
-    mainVideo = document.getElementById('main-video'), // THÊM BIẾN VIDEO
+    mainVideo = document.getElementById('main-video'),
     timerDisplay = document.getElementById('timer-display'),
     cdElement = document.getElementById('cd-element'),
     visualizerBars = document.getElementById('visualizer-bars');
 
 const music = new Audio();
 
+// Danh sách đã được gán ID tuần tự từ 1-21 để không bị ghi đè thời gian
 const baseSongs = [
-    
-    { id: 0, path: 'assets/Full.mp3', displayName: 'PHUNG MCK', artist: 'MCK', bgVideo: 'assets/1.mp4' },
+    { id: 1, path: 'assets/Full.mp3', displayName: 'PHUNG MCK', artist: 'MCK', bgVideo: 'assets/1.mp4' },
     { id: 2, path: 'assets/bwine.mp3', displayName: 'VÀI TRACK BWINE', artist: 'BWINE', bgVideo: 'assets/2.mp4' },
     { id: 3, path: 'assets/3.mp3', displayName: 'PHUNG THE WEEKND', artist: 'THE WEEKND', bgVideo: 'assets/3.mp4' },
-    
-    { id: 1, path: 'assets/laviem.mp3', displayName: 'SUU TAM', cover: 'assets/4.jpg', artist: 'SoundCloud' },
-    { id: 2, path: 'assets/timem.mp3', displayName: 'SUU TAM', cover: 'assets/2.jpg', artist: 'SoundCloud' },
-    { id: 3, path: 'assets/ty1d.mp3', displayName: 'SUU TAM', cover: 'assets/3.jpg', artist: 'SoundCloud' },
-    { id: 4, path: 'assets/mashup.mp3', displayName: 'SUU TAM', cover: 'assets/5.png', artist: 'SoundCloud' },
-    { id: 5, path: 'assets/biendaovaem.mp3', displayName: 'BIEN DAO & EM', cover: 'assets/7.png', artist: 'SoundCloud' },
-    { id: 6, path: 'assets/amthambenem.mp3', displayName: 'AM THAM BEN EM', cover: 'assets/9.png', artist: 'SoundCloud' },
-    { id: 7, path: 'assets/quaduroi.mp3', displayName: 'QUA DU ROI', cover: 'assets/6.png', artist: 'SoundCloud' },
-    { id: 8, path: 'assets/anhsairoi.mp3', displayName: 'ANH SAI ROI', cover: 'assets/5.png', artist: 'SoundCloud' },
-    { id: 9, path: 'assets/NNTCC.mp3', displayName: 'NEU NHU TA CHANG CON', cover: 'assets/7.png', artist: 'MCK' },
-    { id: 10, path: 'assets/kesaytinh.mp3', displayName: 'KE SAY TINH', cover: 'assets/8.jpg', artist: 'QUOC THIEN' },
-    { id: 11, path: 'assets/denkhinao.mp3', displayName: '....', cover: 'assets/9.jpg', artist: 'Artist' },
-    { id: 12, path: 'assets/50F.mp3', displayName: '50 Feet', cover: 'assets/10.jpg', artist: 'Somo' },
-    { id: 13, path: 'assets/vangogh.mp3', displayName: 'Van Gogh', cover: 'assets/11.jpg', artist: 'Dept Ft AA' },
-    { id: 14, path: 'assets/CRY.mp3', displayName: 'Cry', cover: 'assets/12.jpg', artist: 'Cigarettes After Sex' },
-    { id: 15, path: 'assets/BAAB.mp3', displayName: 'Justin Playlist', cover: 'assets/13.jpg', artist: 'Justin Bieber' }
+    { id: 4, path: 'assets/thekidlaroi1.mp3', displayName: 'THE KID LAROI LIST 1', artist: 'THE KID LAROI', cover: 'assets/thekidlaroi.png' },
+    { id: 5, path: 'assets/thekidlaroi2.mp3', displayName: 'THE KID LAROI LIST 2', artist: 'THE KID LAROI', cover: 'assets/thekidlaroi.png' },
+    { id: 6, path: 'assets/lofilist.mp3', displayName: 'LOFI', artist: 'SUU TAM', cover: 'assets/KHANH.png' },
+    { id: 7, path: 'assets/laviem.mp3', displayName: 'SUU TAM', cover: 'assets/4.jpg', artist: 'SoundCloud' },
+    { id: 8, path: 'assets/timem.mp3', displayName: 'SUU TAM', cover: 'assets/2.jpg', artist: 'SoundCloud' },
+    { id: 9, path: 'assets/ty1d.mp3', displayName: 'SUU TAM', cover: 'assets/3.jpg', artist: 'SoundCloud' },
+    { id: 10, path: 'assets/mashup.mp3', displayName: 'SUU TAM', cover: 'assets/5.png', artist: 'SoundCloud' },
+    { id: 11, path: 'assets/biendaovaem.mp3', displayName: 'BIEN DAO & EM', cover: 'assets/7.png', artist: 'SoundCloud' },
+    { id: 12, path: 'assets/amthambenem.mp3', displayName: 'AM THAM BEN EM', cover: 'assets/9.png', artist: 'SoundCloud' },
+    { id: 13, path: 'assets/quaduroi.mp3', displayName: 'QUA DU ROI', cover: 'assets/6.png', artist: 'SoundCloud' },
+    { id: 14, path: 'assets/anhsairoi.mp3', displayName: 'ANH SAI ROI', cover: 'assets/5.png', artist: 'SoundCloud' },
+    { id: 15, path: 'assets/NNTCC.mp3', displayName: 'NEU NHU TA CHANG CON', cover: 'assets/7.png', artist: 'MCK' },
+    { id: 16, path: 'assets/kesaytinh.mp3', displayName: 'KE SAY TINH', cover: 'assets/8.jpg', artist: 'QUOC THIEN' },
+    { id: 17, path: 'assets/denkhinao.mp3', displayName: '....', cover: 'assets/9.jpg', artist: 'Artist' },
+    { id: 18, path: 'assets/50F.mp3', displayName: '50 Feet', cover: 'assets/10.jpg', artist: 'Somo' },
+    { id: 19, path: 'assets/vangogh.mp3', displayName: 'Van Gogh', cover: 'assets/11.jpg', artist: 'Dept Ft AA' },
+    { id: 20, path: 'assets/CRY.mp3', displayName: 'Cry', cover: 'assets/12.jpg', artist: 'Cigarettes After Sex' },
+    { id: 21, path: 'assets/BAAB.mp3', displayName: 'Justin Playlist', cover: 'assets/13.jpg', artist: 'Justin Bieber' }
 ];
 
 let songs = [];
@@ -105,23 +107,19 @@ function loadMusic(index) {
     
     document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
 
-    // ---- LOGIC THÔNG MINH XỬ LÝ BACKGROUND ----
     if (song.bgVideo) {
-        // 1. NẾU BÀI HÁT CÓ KHAI BÁO bgVideo -> Chạy Video nền
-        mainBg.classList.add('hidden'); // Ẩn ảnh tĩnh
-        mainVideo.classList.add('active'); // Hiện khung video
+        mainBg.classList.add('hidden'); 
+        mainVideo.classList.add('active'); 
         
-        // Kiểm tra tránh load lại nếu video vẫn đang là video đó
         if (!mainVideo.src.endsWith(song.bgVideo)) {
             mainVideo.src = song.bgVideo;
             mainVideo.load();
             mainVideo.play().catch(e => console.log(e));
         }
     } else {
-        // 2. NẾU BÀI HÁT KHÔNG CÓ bgVideo -> Chạy Ảnh tĩnh
-        mainVideo.classList.remove('active'); // Ẩn khung video
-        mainVideo.pause(); // Dừng video cho nhẹ RAM
-        mainBg.classList.remove('hidden'); // Hiện ảnh tĩnh
+        mainVideo.classList.remove('active'); 
+        mainVideo.pause(); 
+        mainBg.classList.remove('hidden'); 
 
         mainBg.style.opacity = 0; 
         setTimeout(() => {
@@ -138,7 +136,6 @@ function loadMusic(index) {
         }, 300); 
     }
 
-   
     if (song.cover) {
         const cdImg = new Image();
         cdImg.onload = () => { cdElement.style.backgroundImage = `url('${song.cover}')`; };
@@ -181,12 +178,19 @@ function handleSongEnd() {
     else changeMusic(1);
 }
 
+// Chức năng mới: Hỗ trợ thời gian chạy đếm lùi
 function updateProgressBar() {
     const { duration, currentTime } = music;
     if (isNaN(duration)) return;
+    
     progress.style.width = `${(currentTime / duration) * 100}%`;
-    durationEl.textContent = formatTime(duration);
+    
+    // Trái: Thời gian đang phát đếm lên
     currentTimeEl.textContent = formatTime(currentTime);
+    
+    // Phải: Thời lượng bài đếm ngược xuống
+    const remainingTime = duration - currentTime;
+    durationEl.textContent = "-" + formatTime(remainingTime);
 }
 
 function setProgressBar(e) {
@@ -201,10 +205,17 @@ function setVolume(e) {
     volumeIcon.className = 'fa-solid ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high'));
 }
 
+// Chức năng mới: Hỗ trợ định dạng H:MM:SS
 function formatTime(seconds) {
     if (isNaN(seconds)) return "0:00";
-    const minutes = Math.floor(seconds / 60);
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
+    
+    if (hours > 0) {
+        return `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    }
     return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
@@ -258,9 +269,6 @@ function renderPlaylist() {
         playlistContent.appendChild(item);
     });
 }
-
-// ... GIỮ NGUYÊN PHẦN BÊN DƯỚI (speed-btn, timer, toggle play...) ...
-// Đoạn này là các EventListener cũ không cần thay đổi.
 
 document.querySelectorAll('.speed-btn').forEach(btn => {
     btn.addEventListener('click', () => {
