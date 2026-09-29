@@ -27,7 +27,7 @@ const music = new Audio();
 
 // Đã chuẩn hóa toàn bộ đường dẫn thành dạng "./assets/..." để đảm bảo GitHub Pages đọc đúng từ thư mục gốc
 const baseSongs = [
-    { id: 1, path: './assets/Full.mp3', displayName: 'PHUNG MCK', artist: 'MCK', bgVideo: './assets/1.mp4' },
+    { id: 1, path: './assets/full.mp3', displayName: 'PHUNG MCK', artist: 'MCK', bgVideo: './assets/1.mp4' },
     { id: 2, path: './assets/bwine.mp3', displayName: 'VÀI TRACK BWINE', artist: 'BWINE', bgVideo: './assets/2.mp4' },
     { id: 3, path: './assets/3.mp3', displayName: 'PHUNG THE WEEKND', artist: 'THE WEEKND', bgVideo: './assets/3.mp4' },
     { id: 4, path: 'https://github.com/minhtri12-dev/music-app/releases/download/v1.0.0/thekidlaroi1.mp3', displayName: 'THE KID LAROI LIST 1', artist: 'THE KID LAROI', cover: './assets/thekidlaroi.png' }, 
