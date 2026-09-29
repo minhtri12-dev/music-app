@@ -25,31 +25,31 @@ const title = document.getElementById('music-title'),
 
 const music = new Audio();
 
-// Danh sách đã được gán ID tuần tự từ 1-21 để không bị ghi đè thời gian
+// Đã chuẩn hóa toàn bộ đường dẫn thành dạng "./assets/..." để đảm bảo GitHub Pages đọc đúng từ thư mục gốc
 const baseSongs = [
-    { id: 1, path: 'assets/Full.mp3', displayName: 'PHUNG MCK', artist: 'MCK', bgVideo: 'assets/1.mp4' },
-    { id: 2, path: 'assets/bwine.mp3', displayName: 'VÀI TRACK BWINE', artist: 'BWINE', bgVideo: 'assets/2.mp4' },
-    { id: 3, path: 'assets/3.mp3', displayName: 'PHUNG THE WEEKND', artist: 'THE WEEKND', bgVideo: 'assets/3.mp4' },
-    { id: 4, path: 'https://github.com/minhtri12-dev/music-app/releases/download/v1.0.0/thekidlaroi1.mp3', displayName: 'THE KID LAROI LIST 1', artist: 'THE KID LAROI', cover: 'assets/thekidlaroi.png' }, 
-    { id: 5, path: 'assets/phungnhactrung.mp3', displayName: 'LIST NHAC TRUNG', artist: 'SUU TAM', bgVideo:'assets/chuongnhuocnam.mp4' },
-    { id: 6, path: 'assets/20.mp3', displayName: 'NHAC TRUNG', artist: 'SUU TAM', cover: 'assets/10.png' },
-    { id: 7, path: 'assets/mashupnhactrung.mp3', displayName: 'NHAC TRUNG', artist: 'SUU TAM', cover: 'assets/10.png' },
-    { id: 8, path: 'assets/267.mp3', displayName: 'W/n', artist: 'SSD ft. (267, Nguyenn, PAR SG)', cover: 'assets/22.png' },
-    { id: 9, path: 'https://github.com/minhtri12-dev/music-app/releases/download/v1.0.0/lofilist.mp3', displayName: 'LOFI', artist: 'SUU TAM', cover: 'assets/KHANH.png' },  
-    { id: 10, path: 'assets/timem.mp3', displayName: 'SUU TAM', cover: 'assets/2.jpg', artist: 'SoundCloud' },
-    { id: 11, path: 'assets/ty1d.mp3', displayName: 'SUU TAM', cover: 'assets/3.jpg', artist: 'SoundCloud' },
-    { id: 12, path: 'assets/mashup.mp3', displayName: 'SUU TAM', cover: 'assets/5.png', artist: 'SoundCloud' },
-    { id: 13, path: 'assets/biendaovaem.mp3', displayName: 'BIEN DAO & EM', cover: 'assets/7.png', artist: 'SoundCloud' },
-    { id: 14, path: 'assets/amthambenem.mp3', displayName: 'AM THAM BEN EM', cover: 'assets/9.png', artist: 'SoundCloud' },
-    { id: 15, path: 'assets/quaduroi.mp3', displayName: 'QUA DU ROI', cover: 'assets/6.png', artist: 'SoundCloud' },
-    { id: 16, path: 'assets/anhsairoi.mp3', displayName: 'ANH SAI ROI', cover: 'assets/5.png', artist: 'SoundCloud' },
-    { id: 17, path: 'assets/NNTCC.mp3', displayName: 'NEU NHU TA CHANG CON', cover: 'assets/7.png', artist: 'MCK' },
-    { id: 18, path: 'assets/kesaytinh.mp3', displayName: 'KE SAY TINH', cover: 'assets/8.jpg', artist: 'QUOC THIEN' },
-    { id: 19, path: 'assets/denkhinao.mp3', displayName: '....', cover: 'assets/9.jpg', artist: 'Artist' },
-    { id: 20, path: 'assets/50F.mp3', displayName: '50 Feet', cover: 'assets/10.jpg', artist: 'Somo' },
-    { id: 21, path: 'assets/vangogh.mp3', displayName: 'Van Gogh', cover: 'assets/11.jpg', artist: 'Dept Ft AA' },
-    { id: 22, path: 'assets/CRY.mp3', displayName: 'Cry', cover: 'assets/12.jpg', artist: 'Cigarettes After Sex' },
-    { id: 23, path: 'assets/BAAB.mp3', displayName: 'Justin Playlist', cover: 'assets/13.jpg', artist: 'Justin Bieber' }
+    { id: 1, path: './assets/Full.mp3', displayName: 'PHUNG MCK', artist: 'MCK', bgVideo: './assets/1.mp4' },
+    { id: 2, path: './assets/bwine.mp3', displayName: 'VÀI TRACK BWINE', artist: 'BWINE', bgVideo: './assets/2.mp4' },
+    { id: 3, path: './assets/3.mp3', displayName: 'PHUNG THE WEEKND', artist: 'THE WEEKND', bgVideo: './assets/3.mp4' },
+    { id: 4, path: 'https://github.com/minhtri12-dev/music-app/releases/download/v1.0.0/thekidlaroi1.mp3', displayName: 'THE KID LAROI LIST 1', artist: 'THE KID LAROI', cover: './assets/thekidlaroi.png' }, 
+    { id: 5, path: './assets/phungnhactrung.mp3', displayName: 'LIST NHAC TRUNG', artist: 'SUU TAM', bgVideo:'./assets/chuongnhuocnam.mp4' },
+    { id: 6, path: './assets/20.mp3', displayName: 'NHAC TRUNG', artist: 'SUU TAM', cover: './assets/10.png' },
+    { id: 7, path: './assets/mashupnhactrung.mp3', displayName: 'NHAC TRUNG', artist: 'SUU TAM', cover: './assets/10.png' },
+    { id: 8, path: './assets/267.mp3', displayName: 'W/n', artist: 'SSD ft. (267, Nguyenn, PAR SG)', cover: './assets/22.png' },
+    { id: 9, path: 'https://github.com/minhtri12-dev/music-app/releases/download/v1.0.0/lofilist.mp3', displayName: 'LOFI', artist: 'SUU TAM', cover: './assets/khanh.png' },  
+    { id: 10, path: './assets/timem.mp3', displayName: 'SUU TAM', cover: './assets/2.jpg', artist: 'SoundCloud' },
+    { id: 11, path: './assets/ty1d.mp3', displayName: 'SUU TAM', cover: './assets/3.jpg', artist: 'SoundCloud' },
+    { id: 12, path: './assets/mashup.mp3', displayName: 'SUU TAM', cover: './assets/5.png', artist: 'SoundCloud' },
+    { id: 13, path: './assets/biendaovaem.mp3', displayName: 'BIEN DAO & EM', cover: './assets/7.png', artist: 'SoundCloud' },
+    { id: 14, path: './assets/amthambenem.mp3', displayName: 'AM THAM BEN EM', cover: './assets/9.png', artist: 'SoundCloud' },
+    { id: 15, path: './assets/quaduroi.mp3', displayName: 'QUA DU ROI', cover: './assets/6.png', artist: 'SoundCloud' },
+    { id: 16, path: './assets/anhsairoi.mp3', displayName: 'ANH SAI ROI', cover: './assets/5.png', artist: 'SoundCloud' },
+    { id: 17, path: './assets/nntcc.mp3', displayName: 'NEU NHU TA CHANG CON', cover: './assets/7.png', artist: 'MCK' },
+    { id: 18, path: './assets/kesaytinh.mp3', displayName: 'KE SAY TINH', cover: './assets/8.jpg', artist: 'QUOC THIEN' },
+    { id: 19, path: './assets/denkhinao.mp3', displayName: '....', cover: './assets/9.jpg', artist: 'Artist' },
+    { id: 20, path: './assets/50f.mp3', displayName: '50 Feet', cover: './assets/10.jpg', artist: 'Somo' },
+    { id: 21, path: './assets/vangogh.mp3', displayName: 'Van Gogh', cover: './assets/11.jpg', artist: 'Dept Ft AA' },
+    { id: 22, path: './assets/cry.mp3', displayName: 'Cry', cover: './assets/12.jpg', artist: 'Cigarettes After Sex' },
+    { id: 23, path: './assets/baab.mp3', displayName: 'Justin Playlist', cover: './assets/13.jpg', artist: 'Justin Bieber' }
 ];
 
 let songs = [];
@@ -113,7 +113,7 @@ function loadMusic(index) {
         mainBg.classList.add('hidden'); 
         mainVideo.classList.add('active'); 
         
-        if (!mainVideo.src.endsWith(song.bgVideo)) {
+        if (!mainVideo.src.endsWith(song.bgVideo.replace('./', ''))) {
             mainVideo.src = song.bgVideo;
             mainVideo.load();
             mainVideo.play().catch(e => console.log(e));
@@ -131,7 +131,7 @@ function loadMusic(index) {
                 mainBg.style.opacity = 1; 
             };
             img.onerror = () => { 
-                mainBg.src = 'assets/1.jpg'; 
+                mainBg.src = './assets/1.jpg'; 
                 mainBg.style.opacity = 1; 
             }; 
             img.src = song.cover;
@@ -141,7 +141,7 @@ function loadMusic(index) {
     if (song.cover) {
         const cdImg = new Image();
         cdImg.onload = () => { cdElement.style.backgroundImage = `url('${song.cover}')`; };
-        cdImg.onerror = () => { cdElement.style.backgroundImage = `url('assets/music.png')`; };
+        cdImg.onerror = () => { cdElement.style.backgroundImage = `url('./assets/music.png')`; };
         cdImg.src = song.cover;
     }
 
@@ -180,17 +180,14 @@ function handleSongEnd() {
     else changeMusic(1);
 }
 
-// Chức năng mới: Hỗ trợ thời gian chạy đếm lùi
 function updateProgressBar() {
     const { duration, currentTime } = music;
     if (isNaN(duration)) return;
     
     progress.style.width = `${(currentTime / duration) * 100}%`;
     
-    // Trái: Thời gian đang phát đếm lên
     currentTimeEl.textContent = formatTime(currentTime);
     
-    // Phải: Thời lượng bài đếm ngược xuống
     const remainingTime = duration - currentTime;
     durationEl.textContent = "-" + formatTime(remainingTime);
 }
@@ -207,7 +204,6 @@ function setVolume(e) {
     volumeIcon.className = 'fa-solid ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high'));
 }
 
-// Chức năng mới: Hỗ trợ định dạng H:MM:SS
 function formatTime(seconds) {
     if (isNaN(seconds)) return "0:00";
     
