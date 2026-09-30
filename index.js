@@ -21,11 +21,11 @@ const title = document.getElementById('music-title'),
     mainVideo = document.getElementById('main-video'),
     timerDisplay = document.getElementById('timer-display'),
     cdElement = document.getElementById('cd-element'),
-    visualizerBars = document.getElementById('visualizer-bars');
+    visualizerBars = document.getElementById('visualizer-bars'),
+    searchInput = document.getElementById('search-input');
 
 const music = new Audio();
 
-// Đã chuẩn hóa toàn bộ đường dẫn thành dạng "./assets/..." để đảm bảo GitHub Pages đọc đúng từ thư mục gốc
 const baseSongs = [
     { id: 1, path: './assets/full.mp3', displayName: 'PHUNG MCK', artist: 'MCK', bgVideo: './assets/1.mp4' },
     { id: 2, path: './assets/bwine.mp3', displayName: 'VÀI TRACK BWINE', artist: 'BWINE', bgVideo: './assets/2.mp4' },
@@ -57,6 +57,7 @@ let musicIndex = 0;
 let isShuffle = false;
 let isRepeat = false;
 let currentTab = 'all';
+let searchQuery = ''; 
 
 let sleepTimer = null;
 let countdownInterval = null;
@@ -65,7 +66,36 @@ function initSongs() {
     const savedFavs = localStorage.getItem('aurora_favorites_tri');
     let favIds = savedFavs ? JSON.parse(savedFavs) : [];
     songs = baseSongs.map(song => ({ ...song, isFavorite: favIds.includes(song.id) }));
+
+    const savedState = JSON.parse(localStorage.getItem('nmt_music_state'));
+    if (savedState) {
+        musicIndex = savedState.index >= 0 && savedState.index < songs.length ? savedState.index : 0;
+        isShuffle = savedState.isShuffle || false;
+        isRepeat = savedState.isRepeat || false;
+        music.volume = savedState.volume !== undefined ? savedState.volume : 1;
+        
+        volumeSlider.value = music.volume;
+        if(isShuffle) shuffleBtn.classList.add('active');
+        if(isRepeat) repeatBtn.classList.add('active');
+        setVolumeIcon(music.volume);
+
+        music.addEventListener('loadedmetadata', function setTime() {
+            if (savedState.currentTime) music.currentTime = savedState.currentTime;
+            music.removeEventListener('loadedmetadata', setTime);
+        });
+    }
 }
+
+function savePlayerState() {
+    localStorage.setItem('nmt_music_state', JSON.stringify({
+        index: musicIndex,
+        currentTime: music.currentTime,
+        volume: music.volume,
+        isShuffle: isShuffle,
+        isRepeat: isRepeat
+    }));
+}
+setInterval(savePlayerState, 2000);
 
 function saveFavorites() {
     const favIds = songs.filter(song => song.isFavorite).map(song => song.id);
@@ -73,8 +103,17 @@ function saveFavorites() {
 }
 
 function getFilteredSongs() {
-    if (currentTab === 'fav') return songs.filter(s => s.isFavorite);
-    return songs;
+    let filtered = songs;
+    if (currentTab === 'fav') filtered = filtered.filter(s => s.isFavorite);
+    
+    if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(s => 
+            s.displayName.toLowerCase().includes(query) || 
+            s.artist.toLowerCase().includes(query)
+        );
+    }
+    return filtered;
 }
 
 function togglePlay() {
@@ -98,6 +137,7 @@ function pauseMusic() {
     playBtn.setAttribute('title', 'Play');
     cdElement.classList.remove('playing');
     visualizerBars.classList.remove('playing');
+    savePlayerState();
 }
 
 function loadMusic(index) {
@@ -108,6 +148,22 @@ function loadMusic(index) {
     artist.textContent = song.artist;
     
     document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
+
+    // Tích hợp Media Session API (Giao tiếp với hệ điều hành/màn hình khóa)
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: song.displayName,
+            artist: song.artist,
+            album: 'Chill & Relax Playlist',
+            artwork: [
+                { src: song.cover || './assets/music.png', sizes: '512x512', type: 'image/png' }
+            ]
+        });
+        navigator.mediaSession.setActionHandler('play', playMusic);
+        navigator.mediaSession.setActionHandler('pause', pauseMusic);
+        navigator.mediaSession.setActionHandler('previoustrack', () => changeMusic(-1));
+        navigator.mediaSession.setActionHandler('nexttrack', () => changeMusic(1));
+    }
 
     if (song.bgVideo) {
         mainBg.classList.add('hidden'); 
@@ -126,14 +182,8 @@ function loadMusic(index) {
         mainBg.style.opacity = 0; 
         setTimeout(() => {
             const img = new Image();
-            img.onload = () => { 
-                mainBg.src = song.cover; 
-                mainBg.style.opacity = 1; 
-            };
-            img.onerror = () => { 
-                mainBg.src = './assets/1.jpg'; 
-                mainBg.style.opacity = 1; 
-            }; 
+            img.onload = () => { mainBg.src = song.cover; mainBg.style.opacity = 1; };
+            img.onerror = () => { mainBg.src = './assets/1.jpg'; mainBg.style.opacity = 1; }; 
             img.src = song.cover;
         }, 300); 
     }
@@ -146,6 +196,7 @@ function loadMusic(index) {
     }
 
     if(currentTab !== 'settings') renderPlaylist();
+    savePlayerState();
 }
 
 function changeMusic(direction) {
@@ -185,9 +236,7 @@ function updateProgressBar() {
     if (isNaN(duration)) return;
     
     progress.style.width = `${(currentTime / duration) * 100}%`;
-    
     currentTimeEl.textContent = formatTime(currentTime);
-    
     const remainingTime = duration - currentTime;
     durationEl.textContent = "-" + formatTime(remainingTime);
 }
@@ -197,31 +246,38 @@ function setProgressBar(e) {
     music.currentTime = (e.offsetX / width) * music.duration;
 }
 
+function setVolumeIcon(vol) {
+    volumeIcon.className = 'fa-solid ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high'));
+}
+
 function setVolume(e) {
     const vol = parseFloat(e.target.value);
     music.volume = vol;
     music.muted = vol === 0;
-    volumeIcon.className = 'fa-solid ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high'));
+    setVolumeIcon(vol);
+    savePlayerState();
 }
 
 function formatTime(seconds) {
     if (isNaN(seconds)) return "0:00";
-    
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    
-    if (hours > 0) {
-        return `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
-    }
+    if (hours > 0) return `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
     return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
 }
+
+searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    renderPlaylist();
+});
 
 function renderPlaylist() {
     playlistContent.innerHTML = '';
     let displaySongs = getFilteredSongs();
+    
     if (displaySongs.length === 0) {
-        playlistContent.innerHTML = '<p style="color:#ddd; text-align:center; font-size:13px; margin-top:20px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">Trống.</p>';
+        playlistContent.innerHTML = '<p style="color:#ddd; text-align:center; font-size:13px; margin-top:20px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">Không tìm thấy bài hát.</p>';
         return;
     }
     
@@ -291,12 +347,12 @@ document.querySelectorAll('.timer-btn').forEach(btn => {
         }
 
         let remainingSecs = minutes * 60;
-        timerDisplay.textContent = `Tự động tắt nhạc sau: ${formatTime(remainingSecs)}`;
+        timerDisplay.textContent = `Tắt nhạc sau: ${formatTime(remainingSecs)}`;
 
         countdownInterval = setInterval(() => {
             remainingSecs--;
             if (remainingSecs <= 0) clearInterval(countdownInterval);
-            else timerDisplay.textContent = `Tự động tắt nhạc sau: ${formatTime(remainingSecs)}`;
+            else timerDisplay.textContent = `Tắt nhạc sau: ${formatTime(remainingSecs)}`;
         }, 1000);
 
         sleepTimer = setTimeout(() => {
@@ -316,8 +372,8 @@ music.addEventListener('timeupdate', updateProgressBar);
 playerProgress.addEventListener('click', setProgressBar);
 volumeSlider.addEventListener('input', setVolume);
 
-shuffleBtn.addEventListener('click', () => { isShuffle = !isShuffle; shuffleBtn.classList.toggle('active', isShuffle); });
-repeatBtn.addEventListener('click', () => { isRepeat = !isRepeat; repeatBtn.classList.toggle('active', isRepeat); });
+shuffleBtn.addEventListener('click', () => { isShuffle = !isShuffle; shuffleBtn.classList.toggle('active', isShuffle); savePlayerState(); });
+repeatBtn.addEventListener('click', () => { isRepeat = !isRepeat; repeatBtn.classList.toggle('active', isRepeat); savePlayerState(); });
 playlistToggleBtn.addEventListener('click', () => playlistDrawer.classList.toggle('active'));
 
 tabBtns.forEach(btn => {
@@ -327,9 +383,11 @@ tabBtns.forEach(btn => {
         currentTab = btn.getAttribute('data-tab');
         
         if (currentTab === 'settings') {
+            document.getElementById('search-box').style.display = 'none';
             playlistContent.classList.remove('active');
             settingsContent.classList.add('active');
         } else {
+            document.getElementById('search-box').style.display = 'block';
             settingsContent.classList.remove('active');
             playlistContent.classList.add('active');
             renderPlaylist();
@@ -340,6 +398,8 @@ tabBtns.forEach(btn => {
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName.toLowerCase() === 'input') return;
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePlay(); }
+    if (e.code === 'ArrowRight') { e.preventDefault(); changeMusic(1); }
+    if (e.code === 'ArrowLeft') { e.preventDefault(); changeMusic(-1); }
 });
 
 initSongs();
