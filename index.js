@@ -149,14 +149,17 @@ function loadMusic(index) {
     
     document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
 
-    // Tích hợp Media Session API (Giao tiếp với hệ điều hành/màn hình khóa)
+    // Fix lỗi hiện ảnh bìa trên màn hình khóa điện thoại
     if ('mediaSession' in navigator) {
+        const coverUrl = new URL(song.cover || './assets/music.png', window.location.href).href;
+
         navigator.mediaSession.metadata = new MediaMetadata({
             title: song.displayName,
             artist: song.artist,
             album: 'Chill & Relax Playlist',
             artwork: [
-                { src: song.cover || './assets/music.png', sizes: '512x512', type: 'image/png' }
+                { src: coverUrl, sizes: '512x512', type: 'image/png' },
+                { src: coverUrl, sizes: '256x256', type: 'image/png' } 
             ]
         });
         navigator.mediaSession.setActionHandler('play', playMusic);
