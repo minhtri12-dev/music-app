@@ -19,6 +19,12 @@
     <!-- Ảnh nền tĩnh -->
     <img src="assets/1.jpg" class="background-img" id="main-bg" alt="Background">
 
+    <!-- Thông báo Zen Mode đếm ngược -->
+    <div id="zen-toast">Giao diện sẽ ẩn sau 5s...</div>
+
+    <!-- Container cho Toast Notifications chung -->
+    <div id="toast-container"></div>
+
     <div class="bg-overlay"></div>
 
     <div class="app-layout">
@@ -114,7 +120,7 @@
                     </div>
                     
                     <div class="volume-control">
-                        <i class="fa-solid fa-volume-high" id="volume-icon"></i>
+                        <i class="fa-solid fa-volume-high" id="volume-icon" title="Mute/Unmute"></i>
                         <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
                     </div>
                 </div>

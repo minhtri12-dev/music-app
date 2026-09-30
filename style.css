@@ -23,11 +23,57 @@ body {
     width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.45); 
     z-index: -1;
+    transition: background 1s ease-in-out;
 }
+
+body.zen-active .bg-overlay {
+    background: rgba(0, 0, 0, 0.15); 
+}
+
+/* Toast Notifications */
+#toast-container {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 10px; align-items: center;
+    z-index: 1000; pointer-events: none;
+}
+.custom-toast {
+    background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3); color: #fff;
+    padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    animation: toastIn 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+.custom-toast.fade-out {
+    animation: toastOut 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-10px) scale(0.95); }
+}
+
+#zen-toast {
+    position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3); color: #fff;
+    padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    z-index: 100; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+#zen-toast.show { opacity: 1; visibility: visible; }
 
 .app-layout {
     position: relative; z-index: 10; display: flex;
     align-items: center; justify-content: center; gap: 20px; 
+    transition: opacity 1s ease-in-out, visibility 1s ease-in-out, transform 1s ease-in-out;
+}
+
+.app-layout.zen-mode {
+    opacity: 0; visibility: hidden;
+    transform: scale(0.95);
 }
 
 .side-playlist {
@@ -51,9 +97,7 @@ body {
 }
 .tab-btn.active { background: #fff; color: #000; text-shadow: none; }
 
-.search-box {
-    padding: 5px 20px 10px 20px; position: relative;
-}
+.search-box { padding: 5px 20px 10px 20px; position: relative; }
 .search-box input {
     width: 100%; padding: 10px 35px 10px 15px;
     background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.2);
@@ -101,6 +145,17 @@ body {
 .favorite-btn { font-size: 14px; color: #ddd; transition: 0.2s; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));}
 .favorite-btn:hover { color: #fff; transform: scale(1.1);}
 .favorite-btn.favorited { color: #ec4899; } 
+
+/* Heart burst animation */
+.favorite-btn.burst {
+    animation: heartBurst 0.4s ease;
+}
+@keyframes heartBurst {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); color: #ec4899; }
+    100% { transform: scale(1); }
+}
+
 .track-time { font-size: 12px; color: #ddd; width: 30px; text-align: right; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8);}
 
 .glass-player {
@@ -139,6 +194,7 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.6);
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 20px; animation: spin 6s linear infinite; animation-play-state: paused;
+    transition: border-color 0.5s ease, box-shadow 0.5s ease;
 }
 .modern-cd.playing { animation-play-state: running; }
 .cd-hole {
@@ -180,7 +236,7 @@ body {
 .player-progress {
     flex: 1; height: 4px; background: rgba(255, 255, 255, 0.4); border-radius: 2px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
-.progress { height: 100%; background: #fff; border-radius: 2px; width: 0%; position: relative; }
+.progress { height: 100%; background: #fff; border-radius: 2px; width: 0%; position: relative; transition: background-color 0.5s ease; }
 .progress::after {
     content: ''; position: absolute; right: -5px; top: -3px;
     width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
@@ -199,7 +255,8 @@ body {
 .play-btn-wrapper i.fa-pause { margin-left: 0; }
 
 .volume-control { position: absolute; right: 0; display: flex; align-items: center; gap: 10px; width: 90px; }
-.volume-control i { font-size: 13px; color: #fff; cursor: pointer; filter: drop-shadow(0 1px 4px rgba(0,0,0,0.8));}
+.volume-control i { font-size: 13px; color: #fff; cursor: pointer; filter: drop-shadow(0 1px 4px rgba(0,0,0,0.8)); transition: transform 0.2s;}
+.volume-control i:hover { transform: scale(1.15); }
 #volume-slider {
     -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255, 255, 255, 0.4);
     border-radius: 2px; outline: none; box-shadow: 0 1px 3px rgba(0,0,0,0.5);
