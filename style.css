@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500;600;700&display=swap');
 
-/* ĐỊNH NGHĨA BIẾN MÀU SẮC CHO CHẾ ĐỘ MOOD */
 :root {
     --accent-color: #fff;
     --overlay-color: rgba(0, 0, 0, 0.45);
@@ -9,7 +8,6 @@
     --hover-bg: rgba(255, 255, 255, 0.15);
 }
 
-/* Các Mood Themes (GIẢM OPACITY XUỐNG 35-40% ĐỂ THẤY RÕ ẢNH NỀN) */
 body.theme-midnight { --accent-color: #3b82f6; --overlay-color: rgba(15, 23, 42, 0.4); } 
 body.theme-sunset { --accent-color: #f97316; --overlay-color: rgba(67, 20, 7, 0.35); } 
 body.theme-forest { --accent-color: #10b981; --overlay-color: rgba(6, 78, 59, 0.4); } 
@@ -40,10 +38,8 @@ body {
     position: absolute; top: 0; left: 0;
     width: 100%; height: 100%;
     background: var(--overlay-color); 
-    z-index: -2;
-    transition: background 1.5s ease-in-out;
+    z-index: -2; transition: background 1.5s ease-in-out;
 }
-
 body.zen-active .bg-overlay { background: rgba(0, 0, 0, 0.15); }
 
 #particle-canvas {
@@ -59,7 +55,7 @@ body.zen-active #particle-canvas { opacity: 1; }
 }
 .custom-toast {
     background: var(--glass-bg); backdrop-filter: blur(12px);
-    border: 1px solid var(--accent-color); color: var(--accent-color); /* Đồng bộ viền và chữ Toast */
+    border: 1px solid var(--accent-color); color: var(--accent-color);
     padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     animation: toastIn 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
@@ -78,14 +74,16 @@ body.zen-active #particle-canvas { opacity: 1; }
 }
 #zen-toast.show { opacity: 1; visibility: visible; }
 
+/* AUTO-HIDE UI */
 .app-layout {
     position: relative; z-index: 10; display: flex;
     align-items: center; justify-content: center; gap: 25px; 
     transition: opacity 1s ease-in-out, visibility 1s ease-in-out, transform 1s ease-in-out;
 }
 .app-layout.zen-mode { opacity: 0; visibility: hidden; transform: scale(0.95); }
+.app-layout.auto-hidden { opacity: 0; pointer-events: none; transform: scale(0.98); }
 
-/* SIDEBAR & UI ELEMENTS */
+/* SIDEBAR */
 .side-playlist {
     width: 0; height: 480px; opacity: 0; overflow: hidden;
     background: transparent; border: none; display: flex; flex-direction: column;
@@ -99,18 +97,15 @@ body.zen-active #particle-canvas { opacity: 1; }
 .tab-btn {
     background: var(--glass-bg); border: 1px solid var(--glass-border);
     color: #ccc; font-size: 13px; padding: 10px; border-radius: 20px; cursor: pointer; flex: 1; 
-    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 .tab-btn:hover { background: var(--hover-bg); transform: translateY(-2px); color: var(--accent-color); border-color: var(--accent-color); }
 .tab-btn.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); font-weight: bold; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
 .search-box { padding: 5px 20px 10px 20px; position: relative; }
 .search-box input {
-    width: 100%; padding: 12px 35px 12px 18px;
-    background: rgba(0, 0, 0, 0.25); border: 1px solid var(--glass-border);
-    border-radius: 25px; color: var(--accent-color); font-size: 13px; outline: none;
-    box-sizing: border-box; transition: all 0.3s ease;
+    width: 100%; padding: 12px 35px 12px 18px; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--glass-border);
+    border-radius: 25px; color: var(--accent-color); font-size: 13px; outline: none; transition: all 0.3s ease;
 }
 .search-box input:focus { border-color: var(--accent-color); background: rgba(0,0,0,0.4); box-shadow: 0 0 10px rgba(0,0,0,0.3); }
 .search-box input::placeholder { color: #aaa; font-style: italic; }
@@ -122,24 +117,17 @@ body.zen-active #particle-canvas { opacity: 1; }
 .playlist-container::-webkit-scrollbar, .settings-container::-webkit-scrollbar { width: 3px; }
 .playlist-container::-webkit-scrollbar-thumb, .settings-container::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; }
 
-/* GIAO DIỆN SETTINGS */
 .settings-container h4 { margin: 0; font-size: 13px; color: #fff; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-.settings-container h4 i { color: var(--accent-color); transition: color 0.5s; margin-right: 5px; } /* Đồng bộ màu icon H4 */
+.settings-container h4 i { color: var(--accent-color); transition: color 0.5s; margin-right: 5px; }
 .mood-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
 .timer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
 
 .setting-btn {
-    background: var(--glass-bg); border: 1px solid var(--glass-border);
-    color: #ccc; font-size: 12px; padding: 10px 0; font-weight: 500;
-    border-radius: 20px; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-    text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); backdrop-filter: blur(5px);
+    background: var(--glass-bg); border: 1px solid var(--glass-border); color: #ccc; font-size: 12px; padding: 10px 0; font-weight: 500;
+    border-radius: 20px; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); backdrop-filter: blur(5px);
 }
 .setting-btn:hover { background: var(--hover-bg); transform: translateY(-2px); border-color: var(--accent-color); color: var(--accent-color); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-.setting-btn.active { 
-    background: var(--accent-color); color: #000; border-color: var(--accent-color); 
-    font-weight: 600; transform: translateY(-2px);
-    box-shadow: 0 0 12px var(--accent-color);
-}
+.setting-btn.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); font-weight: 600; transform: translateY(-2px); box-shadow: 0 0 12px var(--accent-color); }
 
 .action-btn { background: rgba(255,255,255,0.15); color: #fff; }
 .action-btn:hover { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
@@ -147,10 +135,8 @@ body.zen-active #particle-canvas { opacity: 1; }
 .danger-btn:hover { background: #f87171; color: #fff; border-color: #f87171; box-shadow: 0 0 12px #f87171; }
 .timer-status { font-size: 12px; color: var(--accent-color); text-align: center; margin-top: 12px; font-weight: 600; transition: color 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 
-/* TRACKS MÀU ĐỒNG BỘ */
 .track {
-    display: flex; align-items: center; justify-content: space-between;
-    cursor: pointer; padding: 12px; border-radius: 12px; transition: all 0.3s ease; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 12px; border-radius: 12px; transition: all 0.3s ease; margin-bottom: 8px;
     background: rgba(0, 0, 0, 0.15); border: 1px solid var(--glass-border);
 }
 .track:hover { background: var(--hover-bg); border-color: var(--accent-color); transform: translateX(5px); }
@@ -159,21 +145,21 @@ body.zen-active #particle-canvas { opacity: 1; }
 .track-num { color: #aaa; font-size: 12px; width: 14px; text-align: center; font-weight: bold; }
 .active-track .track-num { color: var(--accent-color); text-shadow: 0 0 8px var(--accent-color); }
 .track-details strong { display: block; font-weight: 600; font-size: 14px; color: #fff; margin-bottom: 3px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; width: 155px;}
-.active-track .track-details strong { color: var(--accent-color); } /* Tên bài hát đang phát sáng màu Mood */
+.active-track .track-details strong { color: var(--accent-color); }
 .track-details span { display: block; font-size: 11px; color: #aaa; }
 .track-actions { display: flex; align-items: center; gap: 10px; }
 .favorite-btn { font-size: 14px; color: #aaa; transition: all 0.3s ease; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));}
 .favorite-btn:hover { color: var(--accent-color); transform: scale(1.2);}
-.favorite-btn.favorited { color: var(--accent-color); filter: drop-shadow(0 0 5px var(--accent-color)); } /* Tim đổi màu theo Mood */
+.favorite-btn.favorited { color: var(--accent-color); filter: drop-shadow(0 0 5px var(--accent-color)); }
 .favorite-btn.burst { animation: heartBurst 0.4s ease; }
 @keyframes heartBurst { 0% { transform: scale(1); } 50% { transform: scale(1.5); color: var(--accent-color); } 100% { transform: scale(1); } }
 .track-time { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: #ccc; width: 38px; text-align: right; letter-spacing: 0.5px; transition: color 0.3s;}
 .active-track .track-time { color: var(--accent-color); opacity: 0.8; }
 
-/* MAIN PLAYER THEME SYNC */
+/* MAIN PLAYER CHUẨN MỰC - KHÔNG BỊ TRÀN CHỮ */
 .glass-player {
     display: flex; flex-direction: column; justify-content: space-between;
-    width: 500px; height: 480px; padding: 25px 0; box-sizing: border-box;
+    width: 500px; height: 480px; padding: 25px 0; box-sizing: border-box; 
     background: transparent; border: none; box-shadow: none;
 }
 .top-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; }
@@ -186,25 +172,21 @@ body.zen-active #particle-canvas { opacity: 1; }
 
 .center-info { text-align: center; display: flex; flex-direction: column; align-items: center; margin-top: auto; margin-bottom: 25px; position: relative; }
 
-/* ĐĨA CD PHA LÊ KÍNH MỜ (Tối giản) */
+/* KÍNH PHA LÊ CD */
 .modern-cd {
     width: 105px; height: 105px; border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05); 
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border: 2px solid var(--accent-color);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 20px; animation: spin 6s linear infinite; animation-play-state: paused;
-    transition: border-color 0.8s ease, box-shadow 0.8s ease;
+    background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 2px solid var(--accent-color); box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 20px; animation: spin 6s linear infinite; animation-play-state: paused; transition: border-color 0.8s ease, box-shadow 0.8s ease;
 }
 .modern-cd.playing { animation-play-state: running; box-shadow: 0 0 25px var(--accent-color); }
 .cd-hole { width: 25px; height: 25px; border-radius: 50%; background: transparent; border: 2px solid var(--accent-color); opacity: 0.7; box-shadow: inset 0 0 10px rgba(0,0,0,0.6); transition: border-color 0.8s ease;}
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
 .song-title { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 600; margin: 0 0 5px 0; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-.artist { font-size: 16px; font-weight: 500; color: var(--accent-color); filter: brightness(1.2); opacity: 0.9; text-shadow: 0 1px 5px rgba(0,0,0,0.8); transition: color 0.5s; } /* Ca sĩ có màu Mood ám nhẹ */
+.artist { font-size: 16px; font-weight: 500; color: var(--accent-color); filter: brightness(1.2); opacity: 0.9; text-shadow: 0 1px 5px rgba(0,0,0,0.8); transition: color 0.5s; }
 
-.visualizer { display: flex; gap: 4px; height: 20px; align-items: flex-end; margin-top: 15px; opacity: 0; transition: opacity 0.3s; }
+.visualizer { display: flex; gap: 4px; height: 24px; align-items: flex-end; margin-top: 15px; opacity: 0; transition: opacity 0.3s; }
 .visualizer.playing { opacity: 1; }
 .visualizer span {
     width: 4px; background: var(--accent-color); border-radius: 2px;
@@ -217,11 +199,13 @@ body.zen-active #particle-canvas { opacity: 1; }
 .visualizer span:nth-child(3) { animation-delay: 0.0s; height: 24px; }
 .visualizer span:nth-child(4) { animation-delay: 0.2s; height: 16px; }
 .visualizer span:nth-child(5) { animation-delay: 0.4s; height: 12px; }
+.visualizer span:nth-child(6) { animation-delay: 0.1s; height: 18px; }
+.visualizer span:nth-child(7) { animation-delay: 0.3s; height: 10px; }
 @keyframes bounce { from { height: 4px; } to { height: 24px; } }
 
 .bottom-area { display: flex; flex-direction: column; gap: 20px; }
 .player-progress-container { display: flex; align-items: center; gap: 15px; font-size: 12px; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
-#current-time, #duration { color: var(--accent-color); filter: brightness(1.2); transition: color 0.5s; } /* Đổi màu thời gian theo Mood */
+#current-time, #duration { color: var(--accent-color); filter: brightness(1.2); transition: color 0.5s; }
 
 .player-progress { flex: 1; height: 4px; background: var(--glass-bg); border-radius: 2px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.5); position: relative;}
 .progress { height: 100%; background: var(--accent-color); border-radius: 2px; width: 0%; position: relative; transition: background-color 0.8s ease; }
@@ -231,15 +215,14 @@ body.zen-active #particle-canvas { opacity: 1; }
 .controls-row { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
 .main-controls { display: flex; align-items: center; gap: 25px; }
 .main-controls i { font-size: 17px; color: #ccc; cursor: pointer; transition: 0.3s; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
-.main-controls i:hover, .main-controls i.active { color: var(--accent-color); transform: scale(1.15); filter: drop-shadow(0 0 8px var(--accent-color)); } /* Nút Next/Prev đổi màu Mood */
+.main-controls i:hover, .main-controls i.active { color: var(--accent-color); transform: scale(1.15); filter: drop-shadow(0 0 8px var(--accent-color)); }
 
-/* NÚT PLAY THEME SYNC */
 .play-btn-wrapper {
     width: 54px; height: 54px; background: var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.6);
 }
 .play-btn-wrapper:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--accent-color); }
-.play-btn-wrapper i { color: #111; font-size: 18px; filter: none; margin-left: 3px; transition: color 0.5s;} /* Icon Đen siêu ngầu */
+.play-btn-wrapper i { color: #111; font-size: 18px; filter: none; margin-left: 3px; transition: color 0.5s;}
 .play-btn-wrapper i.fa-pause { margin-left: 0; }
 
 .volume-control { position: absolute; right: 0; display: flex; align-items: center; gap: 10px; width: 90px; }
@@ -247,7 +230,7 @@ body.zen-active #particle-canvas { opacity: 1; }
 .volume-control i:hover { transform: scale(1.2); color: var(--accent-color); }
 #volume-slider { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; transition: 0.3s;}
 #volume-slider:hover { background: rgba(255,255,255,0.4); }
-#volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--accent-color); border-radius: 50%; cursor: pointer; transition: 0.3s; box-shadow: 0 0 5px var(--accent-color);} /* Thanh gạt Volume theo màu Mood */
+#volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--accent-color); border-radius: 50%; cursor: pointer; transition: 0.3s; box-shadow: 0 0 5px var(--accent-color);}
 #volume-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
 @media screen and (max-width: 600px) {

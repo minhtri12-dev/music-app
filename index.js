@@ -16,7 +16,6 @@ const title = document.getElementById('music-title'),
     historyContent = document.getElementById('history-content'),
     settingsContent = document.getElementById('settings-content'),
     playlistToggleBtn = document.getElementById('playlist-toggle-btn'),
-    playlistDrawer = document.getElementById('playlist-drawer'),
     tabBtns = document.querySelectorAll('.tab-btn'),
     mainBg = document.getElementById('main-bg'),
     mainVideo = document.getElementById('main-video'),
@@ -26,7 +25,8 @@ const title = document.getElementById('music-title'),
     searchInput = document.getElementById('search-input'),
     zenToastEl = document.getElementById('zen-toast'),
     toastContainer = document.getElementById('toast-container'),
-    appLayout = document.querySelector('.app-layout');
+    appLayout = document.querySelector('.app-layout'),
+    installAppBtn = document.getElementById('install-app-btn');
 
 const music = new Audio();
 
@@ -58,470 +58,210 @@ const baseSongs = [
     { id: 24, path: './assets/baab.mp3', displayName: 'Justin Playlist', cover: './assets/13.jpg', artist: 'Justin Bieber' }
 ];
 
-let songs = [];
-let playHistory = []; 
-let musicIndex = 0;
-let isShuffle = false;
-let isRepeat = false;
-let currentTab = 'all';
-let searchQuery = ''; 
-
-let sleepTimer = null;
-let countdownInterval = null;
-let fadeInterval = null; 
-let zenTimer = null;
-let zenCountdown = null;
-let isZenMode = false;
-let previousVolume = 1;
-let currentTheme = 'auto'; 
-
+let songs = [], playHistory = [], musicIndex = 0;
+let isShuffle = false, isRepeat = false, currentTab = 'all', searchQuery = ''; 
+let sleepTimer = null, countdownInterval = null, fadeInterval = null; 
+let zenTimer = null, zenCountdown = null, isZenMode = false, previousVolume = 1;
+let currentTheme = 'auto', currentParticle = 'fireflies';
 const songDurationsCache = {};
 
-// ================= PARTICLE OVERLAY =================
-const canvas = document.getElementById('particle-canvas');
-const ctx = canvas.getContext('2d');
-let particlesArray = [];
+// ================= PWA INSTALL LOGIC =================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); deferredPrompt = e; installAppBtn.style.display = 'block';
+});
+installAppBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') showToast('MUSIC APP installed successfully!');
+        deferredPrompt = null;
+    } else { showToast('App is already installed or ready!'); }
+});
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log(err)); });
+}
 
+// ================= AUTO-HIDE UI =================
+let hideUITimer;
+function resetHideUI() {
+    appLayout.classList.remove('auto-hidden'); document.body.style.cursor = 'default'; clearTimeout(hideUITimer);
+    if (!music.paused && !isZenMode) { hideUITimer = setTimeout(() => { appLayout.classList.add('auto-hidden'); document.body.style.cursor = 'none'; }, 3000); }
+}
+['mousemove', 'touchstart', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, resetHideUI));
+music.addEventListener('play', resetHideUI);
+music.addEventListener('pause', () => { clearTimeout(hideUITimer); appLayout.classList.remove('auto-hidden'); document.body.style.cursor = 'default'; });
+
+// ================= PARTICLE SWITCHER =================
+const canvas = document.getElementById('particle-canvas'), ctx = canvas.getContext('2d');
+let particlesArray = [];
 function initParticles() {
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    particlesArray = [];
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight; particlesArray = [];
     let numParticles = window.innerWidth < 600 ? 30 : 80;
+    if (currentParticle === 'snow') numParticles = 50; if (currentParticle === 'rain') numParticles = 100;
     for (let i = 0; i < numParticles; i++) {
-        let size = Math.random() * 1.5;
-        let x = Math.random() * innerWidth; let y = Math.random() * innerHeight;
-        let speedX = (Math.random() - 0.5) * 0.4; let speedY = (Math.random() - 1) * 0.4;
+        let size = Math.random() * 1.5 + 0.5, x = Math.random() * innerWidth, y = Math.random() * innerHeight;
+        let speedX = (Math.random() - 0.5) * 0.5, speedY = (Math.random() - 1) * 0.5;
+        if (currentParticle === 'rain') { speedY = Math.random() * 2 + 3; speedX = Math.random() * 0.5; size = Math.random() * 1; }
+        if (currentParticle === 'snow') { speedY = Math.random() * 1 + 0.5; speedX = (Math.random() - 0.5) * 1; size = Math.random() * 2 + 1; }
         particlesArray.push({ x, y, speedX, speedY, size });
     }
 }
 function animateParticles() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     particlesArray.forEach(p => {
-        p.x += p.speedX; p.y += p.speedY;
-        if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
-    });
-    requestAnimationFrame(animateParticles);
+        if (currentParticle === 'rain') { p.y += p.speedY; p.x += p.speedX; ctx.beginPath(); ctx.rect(p.x, p.y, 1.5, p.size * 10); ctx.fill(); } 
+        else if (currentParticle === 'snow') { p.y += p.speedY; p.x += Math.sin(p.y * 0.01) + p.speedX; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); } 
+        else { p.x += p.speedX; p.y += p.speedY; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }
+        if (p.y > canvas.height) p.y = 0; if (p.y < 0) p.y = canvas.height;
+        if (p.x > canvas.width) p.x = 0; if (p.x < 0) p.x = canvas.width;
+    }); requestAnimationFrame(animateParticles);
 }
-window.addEventListener('resize', initParticles);
-initParticles(); animateParticles();
+window.addEventListener('resize', initParticles); animateParticles();
+
+document.querySelectorAll('.particle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.particle-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+        currentParticle = btn.getAttribute('data-particle'); localStorage.setItem('zen_particle', currentParticle);
+        initParticles(); showToast(`Particles: ${btn.textContent}`);
+    });
+});
 
 // ================= TIỆN ÍCH CHUNG =================
 function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'custom-toast'; toast.textContent = message;
-    toastContainer.appendChild(toast);
+    const toast = document.createElement('div'); toast.className = 'custom-toast'; toast.textContent = message; toastContainer.appendChild(toast);
     setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 300); }, 2000);
 }
-
 function formatTime(seconds) {
     if (isNaN(seconds) || seconds === Infinity || seconds === 0) return "--:--";
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-    if (hours > 0) return `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
-    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    const hours = Math.floor(seconds / 3600), minutes = Math.floor((seconds % 3600) / 60), secs = Math.floor(seconds % 60);
+    return hours > 0 ? `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}` : `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
-// ================= INIT & SAVE STATE =================
+// ================= INIT & SAVE =================
 function initSongs() {
-    const savedFavs = localStorage.getItem('aurora_favorites_tri');
-    let favIds = savedFavs ? JSON.parse(savedFavs) : [];
+    const savedFavs = localStorage.getItem('aurora_favorites_tri'); let favIds = savedFavs ? JSON.parse(savedFavs) : [];
     songs = baseSongs.map(song => ({ ...song, isFavorite: favIds.includes(song.id) }));
-
-    const savedHistory = localStorage.getItem('zen_history');
-    if (savedHistory) playHistory = JSON.parse(savedHistory);
-
-    const savedTheme = localStorage.getItem('zen_theme');
-    if (savedTheme) {
-        currentTheme = savedTheme;
-        document.querySelectorAll('.theme-btn').forEach(b => {
-            b.classList.remove('active');
-            if(b.getAttribute('data-theme') === currentTheme) b.classList.add('active');
-        });
-        applyTheme(currentTheme);
-    }
+    if (localStorage.getItem('zen_history')) playHistory = JSON.parse(localStorage.getItem('zen_history'));
+    
+    if (localStorage.getItem('zen_theme')) { currentTheme = localStorage.getItem('zen_theme'); document.querySelectorAll('.theme-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('data-theme') === currentTheme) b.classList.add('active'); }); applyTheme(currentTheme); }
+    if (localStorage.getItem('zen_particle')) { currentParticle = localStorage.getItem('zen_particle'); document.querySelectorAll('.particle-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('data-particle') === currentParticle) b.classList.add('active'); }); initParticles(); } else { document.querySelector('[data-particle="fireflies"]').classList.add('active'); initParticles(); }
 
     const savedState = JSON.parse(localStorage.getItem('nmt_music_state'));
     if (savedState) {
         musicIndex = savedState.index >= 0 && savedState.index < songs.length ? savedState.index : 0;
-        isShuffle = savedState.isShuffle || false;
-        isRepeat = savedState.isRepeat || false;
-        music.volume = savedState.volume !== undefined ? savedState.volume : 1;
-        previousVolume = music.volume > 0 ? music.volume : 1;
-        
-        volumeSlider.value = music.volume;
-        if(isShuffle) shuffleBtn.classList.add('active');
-        if(isRepeat) repeatBtn.classList.add('active');
-        setVolumeIcon(music.volume);
-
-        music.addEventListener('loadedmetadata', function setTime() {
-            if (savedState.currentTime) music.currentTime = savedState.currentTime;
-            music.removeEventListener('loadedmetadata', setTime);
-        });
+        isShuffle = savedState.isShuffle || false; isRepeat = savedState.isRepeat || false;
+        music.volume = savedState.volume !== undefined ? savedState.volume : 1; previousVolume = music.volume > 0 ? music.volume : 1;
+        volumeSlider.value = music.volume; if(isShuffle) shuffleBtn.classList.add('active'); if(isRepeat) repeatBtn.classList.add('active'); setVolumeIcon(music.volume);
+        music.addEventListener('loadedmetadata', function setTime() { if (savedState.currentTime) music.currentTime = savedState.currentTime; music.removeEventListener('loadedmetadata', setTime); });
     }
 }
-
-function savePlayerState() {
-    localStorage.setItem('nmt_music_state', JSON.stringify({ index: musicIndex, currentTime: music.currentTime, volume: music.volume, isShuffle: isShuffle, isRepeat: isRepeat }));
-}
+function savePlayerState() { localStorage.setItem('nmt_music_state', JSON.stringify({ index: musicIndex, currentTime: music.currentTime, volume: music.volume, isShuffle: isShuffle, isRepeat: isRepeat })); }
 setInterval(savePlayerState, 2000);
 
-// ================= SMOOTH AUDIO FADE-OUT =================
+// ================= PLAY / PAUSE LOGIC =================
 function fadeOutAndPause(durationMs = 800) {
-    if (fadeInterval) clearInterval(fadeInterval);
-    const step = music.volume / (durationMs / 50);
-    const currentVol = music.volume;
-    
-    fadeInterval = setInterval(() => {
-        if (music.volume - step > 0) {
-            music.volume -= step;
-        } else {
-            music.volume = 0; music.pause(); clearInterval(fadeInterval);
-            music.volume = currentVol; 
-            updatePlayBtnState();
-        }
-    }, 50);
+    if (fadeInterval) clearInterval(fadeInterval); const step = music.volume / (durationMs / 50), currentVol = music.volume;
+    fadeInterval = setInterval(() => { if (music.volume - step > 0) music.volume -= step; else { music.volume = 0; music.pause(); clearInterval(fadeInterval); music.volume = currentVol; updatePlayBtnState(); } }, 50);
 }
-
-function togglePlay() {
+function togglePlay() { 
     if (fadeInterval) { clearInterval(fadeInterval); music.volume = previousVolume > 0 ? previousVolume : 1; }
     if (music.paused) playMusic(); else fadeOutAndPause(500); 
 }
-
 function playMusic() {
     if (fadeInterval) { clearInterval(fadeInterval); music.volume = previousVolume > 0 ? previousVolume : 1; }
-    music.play().then(() => updatePlayBtnState()).catch(e => console.log(e));
+    music.play().then(() => updatePlayBtnState()).catch(e => console.log(e)); 
     if(currentTab !== 'settings') renderPlaylist();
 }
-
 function updatePlayBtnState() {
-    if (music.paused) {
-        playBtn.classList.replace('fa-pause', 'fa-play'); playBtn.setAttribute('title', 'Play');
-        cdElement.classList.remove('playing'); visualizerBars.classList.remove('playing');
-    } else {
-        playBtn.classList.replace('fa-play', 'fa-pause'); playBtn.setAttribute('title', 'Pause');
-        cdElement.classList.add('playing'); visualizerBars.classList.add('playing');
-    }
+    if (music.paused) { playBtn.classList.replace('fa-pause', 'fa-play'); playBtn.setAttribute('title', 'Play'); cdElement.classList.remove('playing'); visualizerBars.classList.remove('playing'); } 
+    else { playBtn.classList.replace('fa-play', 'fa-pause'); playBtn.setAttribute('title', 'Pause'); cdElement.classList.add('playing'); visualizerBars.classList.add('playing'); }
     savePlayerState();
 }
 
-// ================= MOOD THEMES =================
-function applyTheme(theme) {
-    document.body.className = '';
-    if (theme !== 'auto') document.body.classList.add(`theme-${theme}`);
-    localStorage.setItem('zen_theme', theme);
-}
+// ================= THEMES & BACKGROUNDS =================
+function applyTheme(theme) { document.body.className = ''; if (theme !== 'auto') document.body.classList.add(`theme-${theme}`); localStorage.setItem('zen_theme', theme); }
+document.querySelectorAll('.theme-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTheme = btn.getAttribute('data-theme'); applyTheme(currentTheme); if (currentTheme === 'auto') applyDynamicAccent(songs[musicIndex].cover); showToast(`Mood: ${btn.textContent}`); }); });
+function applyDynamicAccent(coverUrl) { if (currentTheme !== 'auto') return; if (!coverUrl || coverUrl.includes('music.png')) document.documentElement.style.setProperty('--accent-color', '#fff'); else document.documentElement.style.setProperty('--accent-color', '#ec4899'); }
 
-document.querySelectorAll('.theme-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTheme = btn.getAttribute('data-theme');
-        applyTheme(currentTheme);
-        if (currentTheme === 'auto') applyDynamicAccent(songs[musicIndex].cover); 
-        showToast(`Mood: ${btn.textContent}`);
-    });
-});
-
-function applyDynamicAccent(coverUrl) {
-    if (currentTheme !== 'auto') return; 
-    if (!coverUrl || coverUrl.includes('music.png')) { document.documentElement.style.setProperty('--accent-color', '#fff'); } 
-    else { document.documentElement.style.setProperty('--accent-color', '#ec4899'); }
-}
-
-// ================= LÕI LOAD NHẠC =================
 function loadMusic(index) {
-    musicIndex = index;
-    const song = songs[musicIndex];
-    music.src = song.path;
-    title.textContent = song.displayName;
-    artist.textContent = song.artist;
-    document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
+    musicIndex = index; const song = songs[musicIndex]; music.src = song.path; title.textContent = song.displayName; artist.textContent = song.artist; document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
+    playHistory = playHistory.filter(id => id !== song.id); playHistory.unshift(song.id); if(playHistory.length > 20) playHistory.pop(); localStorage.setItem('zen_history', JSON.stringify(playHistory));
 
-    playHistory = playHistory.filter(id => id !== song.id);
-    playHistory.unshift(song.id);
-    if(playHistory.length > 20) playHistory.pop();
-    localStorage.setItem('zen_history', JSON.stringify(playHistory));
-
-    if ('mediaSession' in navigator) {
-        const coverUrl = new URL(song.cover || './assets/music.png', window.location.href).href;
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: song.displayName, artist: song.artist, album: 'Chill & Relax',
-            artwork: [{ src: coverUrl, sizes: '512x512', type: 'image/png' }]
-        });
-        navigator.mediaSession.setActionHandler('play', playMusic);
-        navigator.mediaSession.setActionHandler('pause', () => fadeOutAndPause(500));
-        navigator.mediaSession.setActionHandler('previoustrack', () => changeMusic(-1));
-        navigator.mediaSession.setActionHandler('nexttrack', () => changeMusic(1));
-    }
-
-    const customBg = localStorage.getItem('zen_custom_bg_' + song.id);
-    if (customBg) {
-        applyBackground(customBg);
-    } else {
-        if (song.bgVideo) applyBackground(song.bgVideo);
-        else applyBackground(song.cover || './assets/1.jpg', true);
-    }
-
-    if (song.cover) {
-        applyDynamicAccent(song.cover);
-    } else {
-        applyDynamicAccent(null);
-    }
-
-    if(currentTab !== 'settings') renderPlaylist();
-    savePlayerState();
+    if ('mediaSession' in navigator) { const coverUrl = new URL(song.cover || './assets/music.png', window.location.href).href; navigator.mediaSession.metadata = new MediaMetadata({ title: song.displayName, artist: song.artist, album: 'Chill & Relax', artwork: [{ src: coverUrl, sizes: '512x512', type: 'image/png' }] }); navigator.mediaSession.setActionHandler('play', playMusic); navigator.mediaSession.setActionHandler('pause', () => fadeOutAndPause(500)); navigator.mediaSession.setActionHandler('previoustrack', () => changeMusic(-1)); navigator.mediaSession.setActionHandler('nexttrack', () => changeMusic(1)); }
+    const customBg = localStorage.getItem('zen_custom_bg_' + song.id); if (customBg) applyBackground(customBg); else { if (song.bgVideo) applyBackground(song.bgVideo); else applyBackground(song.cover || './assets/1.jpg', true); }
+    if (song.cover) applyDynamicAccent(song.cover); else applyDynamicAccent(null);
+    if(currentTab !== 'settings') renderPlaylist(); savePlayerState();
 }
 
 function applyBackground(source, isFallback = false) {
     const isVideo = source.endsWith('.mp4') || source.includes('.mp4?');
-    if (isVideo) {
-        mainBg.classList.add('hidden'); mainVideo.classList.add('active'); 
-        if (!mainVideo.src.endsWith(source.replace('./', ''))) {
-            mainVideo.src = source; mainVideo.load(); mainVideo.play().catch(e => console.log(e));
-        }
-    } else {
-        mainVideo.classList.remove('active'); mainVideo.pause(); 
-        mainBg.classList.remove('hidden'); mainBg.style.opacity = 0; 
-        setTimeout(() => {
-            const img = new Image();
-            img.onload = () => { mainBg.src = source; mainBg.style.opacity = 1; };
-            img.onerror = () => { mainBg.src = './assets/1.jpg'; mainBg.style.opacity = 1; }; 
-            img.src = source;
-        }, 300); 
-    }
+    if (isVideo) { mainBg.classList.add('hidden'); mainVideo.classList.add('active'); if (!mainVideo.src.endsWith(source.replace('./', ''))) { mainVideo.src = source; mainVideo.load(); mainVideo.play().catch(e => console.log(e)); } } 
+    else { mainVideo.classList.remove('active'); mainVideo.pause(); mainBg.classList.remove('hidden'); mainBg.style.opacity = 0; setTimeout(() => { const img = new Image(); img.onload = () => { mainBg.src = source; mainBg.style.opacity = 1; }; img.onerror = () => { mainBg.src = './assets/1.jpg'; mainBg.style.opacity = 1; }; img.src = source; }, 300); }
 }
 
-// ================= CUSTOM BACKGROUND: DÁN LINK HOẶC TẢI ẢNH (PER-SONG) =================
-const bgInput = document.getElementById('custom-bg-input');
-const uploadBtn = document.getElementById('upload-bg-btn');
-const uploadInput = document.getElementById('custom-bg-upload');
-
-document.getElementById('apply-bg-btn').addEventListener('click', () => {
-    let link = bgInput.value.trim();
-    if (link !== '') {
-        if(link.startsWith('blob:')) { showToast('Lỗi: Hãy copy trực tiếp địa chỉ hình ảnh thật'); return; }
-        const currentSongId = songs[musicIndex].id;
-        localStorage.setItem('zen_custom_bg_' + currentSongId, link);
-        showToast(`Đã áp dụng nền cho bài này`);
-        loadMusic(musicIndex);
-        bgInput.value = '';
-    } else { showToast('Vui lòng dán link vào ô!'); }
-});
-
+const bgInput = document.getElementById('custom-bg-input'), uploadBtn = document.getElementById('upload-bg-btn'), uploadInput = document.getElementById('custom-bg-upload');
+document.getElementById('apply-bg-btn').addEventListener('click', () => { let link = bgInput.value.trim(); if (link !== '') { if(link.startsWith('blob:')) { showToast('Error: Use valid direct link'); return; } localStorage.setItem('zen_custom_bg_' + songs[musicIndex].id, link); showToast(`Custom background applied`); loadMusic(musicIndex); bgInput.value = ''; } else showToast('Please paste a link!'); });
 uploadBtn.addEventListener('click', () => uploadInput.click());
 uploadInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { showToast('Lỗi: Chỉ hỗ trợ file ảnh!'); return; }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width, height = img.height;
-            const MAX_SIZE = 1920; 
-            if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } 
-            else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
-            
-            canvas.width = width; canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-            
-            try {
-                const currentSongId = songs[musicIndex].id;
-                localStorage.setItem('zen_custom_bg_' + currentSongId, compressedBase64);
-                showToast(`Đã tải nền thành công!`);
-                loadMusic(musicIndex);
-            } catch (error) { showToast('Lỗi: Ảnh quá lớn để lưu trữ!'); }
-        };
-        img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-    uploadInput.value = '';
+    const file = e.target.files[0]; if (!file) return; if (!file.type.startsWith('image/')) { showToast('Error: Images only!'); return; }
+    const reader = new FileReader(); reader.onload = (event) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); let width = img.width, height = img.height; const MAX = 1920; if (width > height && width > MAX) { height *= MAX / width; width = MAX; } else if (height > MAX) { width *= MAX / height; height = MAX; } canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height); try { localStorage.setItem('zen_custom_bg_' + songs[musicIndex].id, canvas.toDataURL('image/jpeg', 0.7)); showToast(`Image uploaded!`); loadMusic(musicIndex); } catch (err) { showToast('Error: Image too large!'); } }; img.src = event.target.result; }; reader.readAsDataURL(file); uploadInput.value = '';
 });
+document.getElementById('reset-bg-btn').addEventListener('click', () => { localStorage.removeItem('zen_custom_bg_' + songs[musicIndex].id); bgInput.value = ''; showToast(`Background reset`); loadMusic(musicIndex); });
 
-document.getElementById('reset-bg-btn').addEventListener('click', () => {
-    const currentSongId = songs[musicIndex].id;
-    localStorage.removeItem('zen_custom_bg_' + currentSongId); 
-    bgInput.value = ''; showToast(`Đã khôi phục nền gốc`); loadMusic(musicIndex);
-});
-
-// ================= CONTROLS & LOGIC PHÁT NHẠC =================
+// ================= PLAYLIST & LISTS =================
 function changeMusic(direction) {
-    let playableSongs = getFilteredSongs();
-    if (playableSongs.length === 0) { fadeOutAndPause(); return; }
-
-    let currentFilteredIndex = playableSongs.findIndex(s => s.id === songs[musicIndex].id);
-    if (currentFilteredIndex === -1) currentFilteredIndex = 0;
-    else {
-        if (isShuffle) {
-            let randomIndex; do { randomIndex = Math.floor(Math.random() * playableSongs.length); } while (randomIndex === currentFilteredIndex && playableSongs.length > 1);
-            currentFilteredIndex = randomIndex;
-        } else { currentFilteredIndex = (currentFilteredIndex + direction + playableSongs.length) % playableSongs.length; }
-    }
-    const originalIndex = songs.findIndex(s => s.id === playableSongs[currentFilteredIndex].id);
-    loadMusic(originalIndex); playMusic();
+    let playableSongs = getFilteredSongs(); if (playableSongs.length === 0) { fadeOutAndPause(); return; }
+    let currentFilteredIndex = playableSongs.findIndex(s => s.id === songs[musicIndex].id); if (currentFilteredIndex === -1) currentFilteredIndex = 0; else { if (isShuffle) { let randomIndex; do { randomIndex = Math.floor(Math.random() * playableSongs.length); } while (randomIndex === currentFilteredIndex && playableSongs.length > 1); currentFilteredIndex = randomIndex; } else currentFilteredIndex = (currentFilteredIndex + direction + playableSongs.length) % playableSongs.length; }
+    loadMusic(songs.findIndex(s => s.id === playableSongs[currentFilteredIndex].id)); playMusic();
 }
-
 music.addEventListener('ended', () => { if (isRepeat) { music.currentTime = 0; playMusic(); } else changeMusic(1); });
-
-function getFilteredSongs() {
-    if (currentTab === 'history') return playHistory.map(id => songs.find(s => s.id === id)).filter(s => s);
-    let filtered = songs;
-    if (currentTab === 'fav') filtered = filtered.filter(s => s.isFavorite);
-    if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        filtered = filtered.filter(s => s.displayName.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query));
-    }
-    return filtered;
-}
-
+function getFilteredSongs() { if (currentTab === 'history') return playHistory.map(id => songs.find(s => s.id === id)).filter(s => s); let filtered = songs; if (currentTab === 'fav') filtered = filtered.filter(s => s.isFavorite); if (searchQuery) { const query = searchQuery.toLowerCase(); filtered = filtered.filter(s => s.displayName.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query)); } return filtered; }
 searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderPlaylist(); });
 
 function renderPlaylist() {
-    const container = currentTab === 'history' ? historyContent : playlistContent;
-    container.innerHTML = '';
-    let displaySongs = getFilteredSongs();
-    if (displaySongs.length === 0) { container.innerHTML = '<p style="color:#aaa; text-align:center; font-size:13px; margin-top:20px;">Trống rỗng...</p>'; return; }
-    
+    const container = currentTab === 'history' ? historyContent : playlistContent; container.innerHTML = ''; let displaySongs = getFilteredSongs();
+    if (displaySongs.length === 0) { container.innerHTML = '<p style="color:#aaa; text-align:center; font-size:13px; margin-top:20px;">Empty...</p>'; return; }
     displaySongs.forEach((song, index) => {
-        const originalIndex = songs.findIndex(s => s.id === song.id);
-        const isActive = (originalIndex === musicIndex);
-        const item = document.createElement('div');
-        item.className = `track ${isActive ? 'active-track' : ''}`;
-        
-        const numDisplay = isActive ? '<i class="fa-solid fa-chart-simple"></i>' : (index + 1);
-        const heartClass = song.isFavorite ? 'fa-solid fa-heart favorited' : 'fa-regular fa-heart';
-
-        item.innerHTML = `
-            <div class="track-info">
-                <span class="track-num">${numDisplay}</span>
-                <div class="track-details"><strong>${song.displayName}</strong><span>${song.artist}</span></div>
-            </div>
-            <div class="track-actions">
-                <i class="${heartClass} favorite-btn"></i>
-                <span class="track-time" id="dur-${song.id}-${currentTab}">--:--</span>
-            </div>
-        `;
-        
-        if (songDurationsCache[song.id]) {
-            item.querySelector('.track-time').textContent = songDurationsCache[song.id];
-        } else {
-            const tempAudio = new Audio(song.path);
-            tempAudio.preload = "metadata";
-            tempAudio.addEventListener('loadedmetadata', () => {
-                const timeStr = formatTime(tempAudio.duration);
-                songDurationsCache[song.id] = timeStr; 
-                const dEl = document.getElementById(`dur-${song.id}-${currentTab}`);
-                if (dEl) dEl.textContent = timeStr;
-            });
-            tempAudio.addEventListener('error', () => {
-                const dEl = document.getElementById(`dur-${song.id}-${currentTab}`);
-                if (dEl) dEl.textContent = "--:--";
-            });
-        }
-
+        const originalIndex = songs.findIndex(s => s.id === song.id), isActive = (originalIndex === musicIndex);
+        const item = document.createElement('div'); item.className = `track ${isActive ? 'active-track' : ''}`;
+        const numDisplay = isActive ? '<i class="fa-solid fa-chart-simple"></i>' : (index + 1), heartClass = song.isFavorite ? 'fa-solid fa-heart favorited' : 'fa-regular fa-heart';
+        item.innerHTML = `<div class="track-info"><span class="track-num">${numDisplay}</span><div class="track-details"><strong>${song.displayName}</strong><span>${song.artist}</span></div></div><div class="track-actions"><i class="${heartClass} favorite-btn"></i><span class="track-time" id="dur-${song.id}-${currentTab}">--:--</span></div>`;
+        if (songDurationsCache[song.id]) item.querySelector('.track-time').textContent = songDurationsCache[song.id]; else { const tempAudio = new Audio(song.path); tempAudio.preload = "metadata"; tempAudio.addEventListener('loadedmetadata', () => { const timeStr = formatTime(tempAudio.duration); songDurationsCache[song.id] = timeStr; const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); if (dEl) dEl.textContent = timeStr; }); tempAudio.addEventListener('error', () => { const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); if (dEl) dEl.textContent = "--:--"; }); }
         item.querySelector('.track-info').addEventListener('click', () => { loadMusic(originalIndex); playMusic(); });
-        item.querySelector('.favorite-btn').addEventListener('click', (e) => {
-            e.stopPropagation(); songs[originalIndex].isFavorite = !songs[originalIndex].isFavorite;
-            e.currentTarget.classList.add('burst'); setTimeout(() => e.currentTarget.classList.remove('burst'), 400);
-            showToast(songs[originalIndex].isFavorite ? `Đã thích ❤` : `Đã bỏ thích`);
-            localStorage.setItem('aurora_favorites_tri', JSON.stringify(songs.filter(s => s.isFavorite).map(s => s.id))); 
-            renderPlaylist();
-        });
+        item.querySelector('.favorite-btn').addEventListener('click', (e) => { e.stopPropagation(); songs[originalIndex].isFavorite = !songs[originalIndex].isFavorite; e.currentTarget.classList.add('burst'); setTimeout(() => e.currentTarget.classList.remove('burst'), 400); showToast(songs[originalIndex].isFavorite ? `Added to Favorites` : `Removed from Favorites`); localStorage.setItem('aurora_favorites_tri', JSON.stringify(songs.filter(s => s.isFavorite).map(s => s.id))); renderPlaylist(); });
         container.appendChild(item);
     });
 }
 
-music.addEventListener('timeupdate', () => {
-    const { duration, currentTime } = music; if (isNaN(duration)) return;
-    progress.style.width = `${(currentTime / duration) * 100}%`;
-    currentTimeEl.textContent = formatTime(currentTime); durationEl.textContent = "-" + formatTime(duration - currentTime);
-});
-
+// ================= VOLUME & TIMERS =================
+music.addEventListener('timeupdate', () => { const { duration, currentTime } = music; if (isNaN(duration)) return; progress.style.width = `${(currentTime / duration) * 100}%`; currentTimeEl.textContent = formatTime(currentTime); durationEl.textContent = "-" + formatTime(duration - currentTime); });
 playerProgress.addEventListener('click', (e) => music.currentTime = (e.offsetX / playerProgress.clientWidth) * music.duration);
-
 function setVolumeIcon(vol) { volumeIcon.className = 'fa-solid ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high')); }
-volumeSlider.addEventListener('input', (e) => {
-    const vol = parseFloat(e.target.value); music.volume = vol;
-    if (vol > 0) previousVolume = vol; setVolumeIcon(vol); savePlayerState();
-});
-volumeIcon.addEventListener('click', () => {
-    if (music.volume > 0) { previousVolume = music.volume; music.volume = 0; volumeSlider.value = 0; showToast('Muted'); } 
-    else { music.volume = previousVolume; volumeSlider.value = previousVolume; showToast(`Âm lượng ${Math.round(previousVolume * 100)}%`); }
-    setVolumeIcon(music.volume); savePlayerState();
-});
+volumeSlider.addEventListener('input', (e) => { const vol = parseFloat(e.target.value); music.volume = vol; if (vol > 0) previousVolume = vol; setVolumeIcon(vol); savePlayerState(); });
+volumeIcon.addEventListener('click', () => { if (music.volume > 0) { previousVolume = music.volume; music.volume = 0; volumeSlider.value = 0; showToast('Muted'); } else { music.volume = previousVolume; volumeSlider.value = previousVolume; showToast(`Volume ${Math.round(previousVolume * 100)}%`); } setVolumeIcon(music.volume); savePlayerState(); });
 
-// ================= TIMER =================
 document.querySelectorAll('.timer-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.timer-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-        const minutes = parseInt(btn.getAttribute('data-time'));
-        clearTimeout(sleepTimer); clearInterval(countdownInterval);
-        
-        if (minutes === 0) { timerDisplay.textContent = 'Chưa hẹn giờ'; showToast('Đã hủy hẹn giờ'); return; }
-        
-        let remainingSecs = minutes * 60;
-        timerDisplay.textContent = `Tắt nhạc sau: ${formatTime(remainingSecs)}`;
-        showToast(`Hẹn tắt và mờ dần sau ${minutes} phút`);
-
-        countdownInterval = setInterval(() => {
-            remainingSecs--;
-            if (remainingSecs <= 0) clearInterval(countdownInterval);
-            else timerDisplay.textContent = `Tắt nhạc sau: ${formatTime(remainingSecs)}`;
-        }, 1000);
-
-        sleepTimer = setTimeout(() => {
-            fadeOutAndPause(3000); 
-            timerDisplay.textContent = 'Đã tắt nhạc';
-            document.querySelectorAll('.timer-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.timer-btn[data-time="0"]').classList.add('active');
-        }, minutes * 60 * 1000);
+        document.querySelectorAll('.timer-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const minutes = parseInt(btn.getAttribute('data-time')); clearTimeout(sleepTimer); clearInterval(countdownInterval);
+        if (minutes === 0) { timerDisplay.textContent = 'Timer: Off'; showToast('Sleep timer canceled'); return; }
+        let remainingSecs = minutes * 60; timerDisplay.textContent = `Sleep in: ${formatTime(remainingSecs)}`; showToast(`Timer set for ${minutes} minutes`);
+        countdownInterval = setInterval(() => { remainingSecs--; if (remainingSecs <= 0) clearInterval(countdownInterval); else timerDisplay.textContent = `Sleep in: ${formatTime(remainingSecs)}`; }, 1000);
+        sleepTimer = setTimeout(() => { fadeOutAndPause(3000); timerDisplay.textContent = 'Music stopped'; document.querySelectorAll('.timer-btn').forEach(b => b.classList.remove('active')); document.querySelector('.timer-btn[data-time="0"]').classList.add('active'); }, minutes * 60 * 1000);
     });
 });
 
-playBtnWrapper.addEventListener('click', togglePlay);
-prevBtn.addEventListener('click', () => changeMusic(-1));
-nextBtn.addEventListener('click', () => changeMusic(1));
-shuffleBtn.addEventListener('click', () => { isShuffle = !isShuffle; shuffleBtn.classList.toggle('active', isShuffle); showToast(isShuffle ? 'Bật trộn bài' : 'Tắt trộn bài'); savePlayerState(); });
-repeatBtn.addEventListener('click', () => { isRepeat = !isRepeat; repeatBtn.classList.toggle('active', isRepeat); showToast(isRepeat ? 'Bật lặp lại' : 'Tắt lặp lại'); savePlayerState(); });
+playBtnWrapper.addEventListener('click', togglePlay); prevBtn.addEventListener('click', () => changeMusic(-1)); nextBtn.addEventListener('click', () => changeMusic(1));
+shuffleBtn.addEventListener('click', () => { isShuffle = !isShuffle; shuffleBtn.classList.toggle('active', isShuffle); showToast(isShuffle ? 'Shuffle: ON' : 'Shuffle: OFF'); savePlayerState(); });
+repeatBtn.addEventListener('click', () => { isRepeat = !isRepeat; repeatBtn.classList.toggle('active', isRepeat); showToast(isRepeat ? 'Repeat: ON' : 'Repeat: OFF'); savePlayerState(); });
 
-// ================= MENU TABS =================
-function toggleMenu() { playlistDrawer.classList.toggle('active'); }
-playlistToggleBtn.addEventListener('click', toggleMenu); 
-
-tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        tabBtns.forEach(b => b.classList.remove('active')); btn.classList.add('active');
-        currentTab = btn.getAttribute('data-tab');
-        
-        document.getElementById('search-box').style.display = (currentTab === 'settings') ? 'none' : 'block';
-        playlistContent.classList.remove('active'); historyContent.classList.remove('active'); settingsContent.classList.remove('active');
-        
-        if (currentTab === 'settings') settingsContent.classList.add('active');
-        else if (currentTab === 'history') { historyContent.classList.add('active'); renderPlaylist(); }
-        else { playlistContent.classList.add('active'); renderPlaylist(); }
-    });
-});
+// ================= UI TOGGLES & SHORTCUTS =================
+playlistToggleBtn.addEventListener('click', () => { document.getElementById('playlist-drawer').classList.toggle('active'); }); 
+tabBtns.forEach(btn => { btn.addEventListener('click', () => { tabBtns.forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTab = btn.getAttribute('data-tab'); document.getElementById('search-box').style.display = (currentTab === 'settings') ? 'none' : 'block'; playlistContent.classList.remove('active'); historyContent.classList.remove('active'); settingsContent.classList.remove('active'); if (currentTab === 'settings') settingsContent.classList.add('active'); else if (currentTab === 'history') { historyContent.classList.add('active'); renderPlaylist(); } else { playlistContent.classList.add('active'); renderPlaylist(); } }); });
 
 function toggleZenMode() {
-    if (isZenMode) {
-        isZenMode = false; appLayout.classList.remove('zen-mode'); document.body.classList.remove('zen-active');
-        clearTimeout(zenTimer); clearInterval(zenCountdown); zenToastEl.classList.remove('show');
-        showToast('Thoát Zen Mode');
-    } else {
-        if (zenTimer) { clearTimeout(zenTimer); clearInterval(zenCountdown); zenToastEl.classList.remove('show'); zenTimer = null; showToast('Đã hủy ẩn'); return; }
-        let timeLeft = 5; zenToastEl.textContent = `Ẩn giao diện sau ${timeLeft}s... (Nhấn H để hủy)`; zenToastEl.classList.add('show');
-        zenCountdown = setInterval(() => { timeLeft--; zenToastEl.textContent = `Ẩn giao diện sau ${timeLeft}s... (Nhấn H để hủy)`; if (timeLeft <= 0) clearInterval(zenCountdown); }, 1000);
-        zenTimer = setTimeout(() => {
-            isZenMode = true; appLayout.classList.add('zen-mode'); document.body.classList.add('zen-active'); zenToastEl.classList.remove('show'); zenTimer = null;
-        }, 5000);
-    }
+    if (isZenMode) { isZenMode = false; appLayout.classList.remove('zen-mode'); document.body.classList.remove('zen-active'); clearTimeout(zenTimer); clearInterval(zenCountdown); zenToastEl.classList.remove('show'); showToast('Zen Mode exited'); } 
+    else { if (zenTimer) { clearTimeout(zenTimer); clearInterval(zenCountdown); zenToastEl.classList.remove('show'); zenTimer = null; showToast('Zen Mode canceled'); return; } let timeLeft = 5; zenToastEl.textContent = `Hiding UI in ${timeLeft}s... (Press H to cancel)`; zenToastEl.classList.add('show'); zenCountdown = setInterval(() => { timeLeft--; zenToastEl.textContent = `Hiding UI in ${timeLeft}s... (Press H to cancel)`; if (timeLeft <= 0) clearInterval(zenCountdown); }, 1000); zenTimer = setTimeout(() => { isZenMode = true; appLayout.classList.add('zen-mode'); document.body.classList.add('zen-active'); zenToastEl.classList.remove('show'); zenTimer = null; }, 5000); }
 }
 
 document.addEventListener('keydown', (e) => {
@@ -529,10 +269,12 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePlay(); }
     if (e.code === 'ArrowRight') { e.preventDefault(); changeMusic(1); }
     if (e.code === 'ArrowLeft') { e.preventDefault(); changeMusic(-1); }
-    if (e.code === 'ArrowUp') { e.preventDefault(); let v = Math.min(1, music.volume + 0.1); music.volume = v; volumeSlider.value = v; setVolumeIcon(v); if(v>0) previousVolume=v; showToast(`${Math.round(v*100)}%`); }
-    if (e.code === 'ArrowDown') { e.preventDefault(); let v = Math.max(0, music.volume - 0.1); music.volume = v; volumeSlider.value = v; setVolumeIcon(v); showToast(`${Math.round(v*100)}%`); }
+    if (e.code === 'ArrowUp') { e.preventDefault(); let v = Math.min(1, music.volume + 0.1); music.volume = v; volumeSlider.value = v; setVolumeIcon(v); if(v>0) previousVolume=v; showToast(`Volume ${Math.round(v*100)}%`); }
+    if (e.code === 'ArrowDown') { e.preventDefault(); let v = Math.max(0, music.volume - 0.1); music.volume = v; volumeSlider.value = v; setVolumeIcon(v); showToast(`Volume ${Math.round(v*100)}%`); }
     if (e.code === 'KeyH' || e.key.toLowerCase() === 'h') { e.preventDefault(); toggleZenMode(); }
     if (e.code === 'KeyF' || e.key.toLowerCase() === 'f') { e.preventDefault(); if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+    if (e.code === 'KeyM' || e.key.toLowerCase() === 'm') { e.preventDefault(); volumeIcon.click(); }
+    if (e.code === 'KeyL' || e.key.toLowerCase() === 'l') { e.preventDefault(); repeatBtn.click(); }
 });
 
 initSongs(); loadMusic(musicIndex);
