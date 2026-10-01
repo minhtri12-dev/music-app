@@ -11,34 +11,33 @@
 </head>
 <body>
 
-    <!-- Video nền -->
+    <!-- Video & Ảnh nền gốc -->
     <video autoplay muted loop playsinline class="background-video" id="main-video">
         <source src="" type="video/mp4" id="video-source">
     </video>
-    
-    <!-- Ảnh nền tĩnh -->
     <img src="assets/1.jpg" class="background-img" id="main-bg" alt="Background">
 
-    <!-- Thông báo Zen Mode đếm ngược -->
-    <div id="zen-toast">Giao diện sẽ ẩn sau 5s...</div>
-
-    <!-- Container cho Toast Notifications chung -->
-    <div id="toast-container"></div>
-
+    <!-- Lớp mờ và Canvas Hạt Đom Đóm / Mưa -->
     <div class="bg-overlay"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Toast Notifications -->
+    <div id="zen-toast">GiAO DIỆN SẼ ẨN SAU 5s...</div>
+    <div id="toast-container"></div>
 
     <div class="app-layout">
         
-        <!-- Sidebar Playlist -->
+        <!-- Sidebar Drawer -->
         <div class="side-playlist" id="playlist-drawer">
             <div class="drawer-header">
                 <h3>TrackList</h3>
             </div>
             
             <div class="filter-tabs">
-                <button class="tab-btn active" data-tab="all" title="All Track"><i class="fa-solid fa-music"></i></button>
-                <button class="tab-btn" data-tab="fav" title="Wishlist"><i class="fa-solid fa-heart"></i></button>
-                <button class="tab-btn" data-tab="settings" title="Setting"><i class="fa-solid fa-gear"></i></button>
+                <button class="tab-btn active" data-tab="all" title="Tất cả"><i class="fa-solid fa-music"></i></button>
+                <button class="tab-btn" data-tab="fav" title="Yêu thích"><i class="fa-solid fa-heart"></i></button>
+                <button class="tab-btn" data-tab="history" title="Đã nghe gần đây"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                <button class="tab-btn" data-tab="settings" title="Cài đặt"><i class="fa-solid fa-sliders"></i></button>
             </div>
 
             <!-- Search Box -->
@@ -47,30 +46,56 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
             </div>
 
+            <!-- Các Tab Nội dung -->
             <div class="playlist-container active" id="playlist-content"></div>
+            <div class="playlist-container" id="history-content"></div>
 
             <!-- Settings -->
             <div class="settings-container" id="settings-content">
-                <h4><i class="fa-solid fa-gauge-high"></i> Tốc độ phát</h4>
-                <div class="setting-group">
-                    <button class="speed-btn active" data-speed="1">1x</button>
-                    <button class="speed-btn" data-speed="1.25">1.25x</button>
-                    <button class="speed-btn" data-speed="1.5">1.5x</button>
-                    <button class="speed-btn" data-speed="2">2x</button>
+                
+                <!-- Mood Themes -->
+                <h4><i class="fa-solid fa-palette"></i> TÂM TRẠNG (MOOD)</h4>
+                <div class="setting-group mood-grid">
+                    <button class="setting-btn theme-btn active" data-theme="auto">Tự động</button>
+                    <button class="setting-btn theme-btn" data-theme="midnight">Midnight</button>
+                    <button class="setting-btn theme-btn" data-theme="sunset">Sunset</button>
+                    <button class="setting-btn theme-btn" data-theme="forest">Forest</button>
+                    <button class="setting-btn theme-btn" data-theme="neon">Neon</button>
+                    <button class="setting-btn theme-btn" data-theme="ocean">Ocean</button>
+                    <button class="setting-btn theme-btn" data-theme="cherry">Cherry</button>
+                    <button class="setting-btn theme-btn" data-theme="coffee">Coffee</button>
+                    <button class="setting-btn theme-btn" data-theme="mono">Mono</button>
                 </div>
 
-                <h4 style="margin-top: 10px;"><i class="fa-solid fa-stopwatch"></i> Hẹn giờ tắt (Phút)</h4>
+                <!-- Hẹn giờ tắt -->
+                <h4 style="margin-top: 25px;"><i class="fa-solid fa-stopwatch"></i> HẸN GIỜ TẮT (SLEEP TIMER)</h4>
                 <div class="setting-group timer-grid">
-                    <button class="timer-btn active" data-time="0">Tắt</button>
-                    <button class="timer-btn" data-time="5">5</button>
-                    <button class="timer-btn" data-time="10">10</button>
-                    <button class="timer-btn" data-time="15">15</button>
-                    <button class="timer-btn" data-time="20">20</button>
-                    <button class="timer-btn" data-time="25">25</button>
-                    <button class="timer-btn" data-time="30">30</button>
-                    <button class="timer-btn" data-time="60">60</button>
+                    <button class="setting-btn timer-btn active" data-time="0">Tắt</button>
+                    <button class="setting-btn timer-btn" data-time="1">1m</button>
+                    <button class="setting-btn timer-btn" data-time="5">5m</button>
+                    <button class="setting-btn timer-btn" data-time="10">10m</button>
+                    <button class="setting-btn timer-btn" data-time="15">15m</button>
+                    <button class="setting-btn timer-btn" data-time="20">20m</button>
+                    <button class="setting-btn timer-btn" data-time="25">25m</button>
+                    <button class="setting-btn timer-btn" data-time="30">30m</button>
+                    <button class="setting-btn timer-btn" data-time="60" style="grid-column: span 4;">60 Phút</button>
                 </div>
                 <div id="timer-display" class="timer-status">Chưa hẹn giờ</div>
+
+                <!-- Custom Background -->
+                <h4 style="margin-top: 25px;"><i class="fa-solid fa-image"></i> HÌNH NỀN TÙY CHỈNH (CUSTOM BACKGROUND)</h4>
+                <div class="search-box" style="padding: 0; margin-bottom: 12px;">
+                    <input type="text" class="custom-input" id="custom-bg-input" placeholder="Dán link ảnh/video...">
+                </div>
+                
+                <!-- Input ẩn để Tải ảnh từ máy -->
+                <input type="file" id="custom-bg-upload" accept="image/*" style="display: none;">
+                
+                <div class="setting-group" style="display: flex; gap: 8px;">
+                    <button class="setting-btn action-btn" id="apply-bg-btn" style="flex: 1.2;" title="Dán link">Dán Link</button>
+                    <button class="setting-btn action-btn" id="upload-bg-btn" style="flex: 1.5;" title="Tải ảnh từ máy tính"><i class="fa-solid fa-upload"></i> Tải ảnh</button>
+                    <button class="setting-btn danger-btn" id="reset-bg-btn" style="flex: 1;" title="Xóa nền bài này">Xóa</button>
+                </div>
             </div>
         </div>
 
@@ -84,11 +109,12 @@
                     <span class="app-brand">Chill & Relax</span>
                 </div>
                 <div class="top-right">
-                    <span id="track-count">TRACK 1 OF 23</span>
+                    <span id="track-count">TRACK 1 OF 24</span>
                 </div>
             </div>
             
             <div class="center-info">
+                <!-- Đĩa Kính Pha Lê -->
                 <div class="modern-cd" id="cd-element">
                     <div class="cd-hole"></div>
                 </div>
@@ -128,7 +154,6 @@
         </div>
     </div>
     
-    <div id="hidden-elements" style="display: none;"></div>
     <script src="index.js"></script>
 </body>
 </html>
