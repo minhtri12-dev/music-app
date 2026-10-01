@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="assets/music.png">
-    <link rel="manifest" href="manifest.json">
-    <title>MUSIC APP WITH MY FRIEND| BY NMT</title>
+    <!-- Thư viện chụp ảnh thẻ Share Card -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <title>MUSIC APP | CHILL & RELAX</title>
 </head>
 <body>
 
@@ -22,9 +23,53 @@
     <div class="bg-overlay"></div>
     <canvas id="particle-canvas"></canvas>
 
-    <!-- Toast Notifications -->
-    <div id="zen-toast">Hiding UI in 5s...</div>
+    <!-- Toast Notifications Container -->
     <div id="toast-container"></div>
+
+    <!-- SHARE CARD MODAL -->
+    <div class="modal-overlay" id="share-modal">
+        <div class="share-modal-content">
+            <div class="share-card-preview" id="share-card-preview">
+                <div class="sc-bg" id="sc-bg"></div>
+                <div class="sc-body">
+                    <div class="sc-cover-wrap">
+                        <!-- Đã gỡ bỏ crossorigin để ảnh load mượt mà không bị GitHub Pages chặn -->
+                        <img id="sc-cover" src="assets/music.png" alt="Cover">
+                    </div>
+                    <div class="sc-info">
+                        <h2 id="sc-title">Song Title</h2>
+                        <p id="sc-artist">Artist Name</p>
+                    </div>
+                </div>
+                <div class="sc-footer">
+                    <div class="sc-brand">
+                        <i class="fa-solid fa-music"></i>
+                        <span>Listening on <strong>MUSIC APP by NMT</strong></span>
+                    </div>
+                    <div class="sc-qr" id="sc-qr">
+                        <img id="sc-qr-img" src="" alt="QR Code">
+                    </div>
+                </div>
+            </div>
+            <div class="share-modal-actions">
+                <button class="setting-btn action-btn" id="download-card-btn"><i class="fa-solid fa-download"></i> Download Card</button>
+                <button class="setting-btn danger-btn" id="close-share-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SONG JOURNAL MODAL -->
+    <div class="modal-overlay" id="journal-modal">
+        <div class="journal-box">
+            <h3><i class="fa-solid fa-book-open"></i> Song Journal</h3>
+            <p id="journal-song-title">Song Title</p>
+            <textarea id="journal-input" placeholder="Write your memory or feeling about this song..."></textarea>
+            <div class="journal-actions">
+                <button class="setting-btn action-btn" id="save-journal-btn">Save Note</button>
+                <button class="setting-btn danger-btn" id="close-journal-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <div class="app-layout">
         
@@ -32,13 +77,13 @@
         <div class="side-playlist" id="playlist-drawer">
             <div class="drawer-header">
                 <h3>TrackList</h3>
-                <i class="fa-solid fa-xmark drawer-close-btn" id="drawer-close-btn" title="Close Menu"></i>
             </div>
             
             <div class="filter-tabs">
                 <button class="tab-btn active" data-tab="all" title="All Tracks"><i class="fa-solid fa-music"></i></button>
                 <button class="tab-btn" data-tab="fav" title="Favorites"><i class="fa-solid fa-heart"></i></button>
                 <button class="tab-btn" data-tab="history" title="Recently Played"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                <button class="tab-btn" data-tab="wrapped" title="Mini Wrapped"><i class="fa-solid fa-chart-pie"></i></button>
                 <button class="tab-btn" data-tab="settings" title="Settings"><i class="fa-solid fa-sliders"></i></button>
             </div>
 
@@ -51,18 +96,31 @@
             <!-- Content Tabs -->
             <div class="playlist-container active" id="playlist-content"></div>
             <div class="playlist-container" id="history-content"></div>
+            
+            <!-- Mini Wrapped Tab Container -->
+            <div class="playlist-container" id="wrapped-content">
+                <div class="wrapped-card">
+                    <div class="wrapped-header"><i class="fa-solid fa-fire"></i> Mini Wrapped</div>
+                    <div class="wrapped-stat-item">
+                        <span>Total Listening Time</span>
+                        <strong id="stat-total-time">0 mins</strong>
+                    </div>
+                    <div class="wrapped-stat-item">
+                        <span>Most Played Track</span>
+                        <strong id="stat-top-song">None yet</strong>
+                    </div>
+                    <div class="wrapped-stat-item">
+                        <span>Favorite Mood</span>
+                        <strong id="stat-top-theme">Auto</strong>
+                    </div>
+                    <p class="wrapped-quote">"Music is the soundtrack of your life." — <strong>MUSIC APP by NMT</strong></p>
+                </div>
+            </div>
 
             <!-- Settings -->
             <div class="settings-container" id="settings-content">
-                
-                <!-- Install App Button (PWA) -->
-                <h4 style="margin-top: 0;"><i class="fa-solid fa-download"></i> App Installation</h4>
-                <div class="setting-group" style="margin-top: 10px; margin-bottom: 20px;">
-                    <button class="setting-btn action-btn" id="install-app-btn" style="width: 100%; font-weight: 600;">Install MUSIC APP</button>
-                </div>
-
                 <!-- Mood Themes -->
-                <h4><i class="fa-solid fa-palette"></i> Mood Themes</h4>
+                <h4 style="margin-top: 0;"><i class="fa-solid fa-palette"></i> Mood Themes</h4>
                 <div class="setting-group mood-grid">
                     <button class="setting-btn theme-btn active" data-theme="auto">Auto</button>
                     <button class="setting-btn theme-btn" data-theme="midnight">Midnight</button>
@@ -99,7 +157,7 @@
                 <div id="timer-display" class="timer-status">Timer: Off</div>
 
                 <!-- Custom Background -->
-                <h4 style="margin-top: 25px;"><i class="fa-solid fa-image"></i> Custom Background</h4>
+                <h4 style="margin-top: 25px;"><i class="fa-solid fa-image"></i> Custom Background (Per-song)</h4>
                 <div class="search-box" style="padding: 0; margin-bottom: 12px;">
                     <input type="text" class="custom-input" id="custom-bg-input" placeholder="Paste image/video link...">
                 </div>
@@ -121,9 +179,10 @@
                     <i class="fa-solid fa-list-ul" id="playlist-toggle-btn" title="Toggle Tracklist"></i>
                 </div>
                 <div class="top-center">
-                    <span class="app-brand">CHIL & RELAX</span>
+                    <span class="app-brand">MUSIC APP</span>
                 </div>
                 <div class="top-right">
+                    <i class="fa-solid fa-share-nodes" id="share-card-trigger" title="Share Song Card" style="cursor: pointer; margin-right: 8px;"></i>
                     <span id="track-count">TRACK 1 OF 24</span>
                 </div>
             </div>

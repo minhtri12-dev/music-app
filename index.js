@@ -14,9 +14,9 @@ const title = document.getElementById('music-title'),
     volumeIcon = document.getElementById('volume-icon'),
     playlistContent = document.getElementById('playlist-content'),
     historyContent = document.getElementById('history-content'),
+    wrappedContent = document.getElementById('wrapped-content'),
     settingsContent = document.getElementById('settings-content'),
     playlistToggleBtn = document.getElementById('playlist-toggle-btn'),
-    drawerCloseBtn = document.getElementById('drawer-close-btn'),
     playlistDrawer = document.getElementById('playlist-drawer'),
     tabBtns = document.querySelectorAll('.tab-btn'),
     mainBg = document.getElementById('main-bg'),
@@ -25,10 +25,29 @@ const title = document.getElementById('music-title'),
     cdElement = document.getElementById('cd-element'),
     visualizerBars = document.getElementById('visualizer-bars'),
     searchInput = document.getElementById('search-input'),
-    zenToastEl = document.getElementById('zen-toast'),
     toastContainer = document.getElementById('toast-container'),
     appLayout = document.querySelector('.app-layout'),
-    installAppBtn = document.getElementById('install-app-btn');
+    
+    // Modals elements
+    shareCardTrigger = document.getElementById('share-card-trigger'),
+    shareModal = document.getElementById('share-modal'),
+    closeShareBtn = document.getElementById('close-share-btn'),
+    downloadCardBtn = document.getElementById('download-card-btn'),
+    scBg = document.getElementById('sc-bg'),
+    scCover = document.getElementById('sc-cover'),
+    scTitle = document.getElementById('sc-title'),
+    scArtist = document.getElementById('sc-artist'),
+    scQrImg = document.getElementById('sc-qr-img'),
+    
+    journalModal = document.getElementById('journal-modal'),
+    journalSongTitle = document.getElementById('journal-song-title'),
+    journalInput = document.getElementById('journal-input'),
+    saveJournalBtn = document.getElementById('save-journal-btn'),
+    closeJournalBtn = document.getElementById('close-journal-btn'),
+    
+    statTotalTime = document.getElementById('stat-total-time'),
+    statTopSong = document.getElementById('stat-top-song'),
+    statTopTheme = document.getElementById('stat-top-theme');
 
 const music = new Audio();
 
@@ -63,32 +82,141 @@ const baseSongs = [
 let songs = [], playHistory = [], musicIndex = 0;
 let isShuffle = false, isRepeat = false, currentTab = 'all', searchQuery = ''; 
 let sleepTimer = null, countdownInterval = null, fadeInterval = null; 
-let zenTimer = null, zenCountdown = null, isZenMode = false, previousVolume = 1;
+let isZenMode = false, previousVolume = 1;
 let currentTheme = 'auto', currentParticle = 'fireflies';
 const songDurationsCache = {};
 
-// ================= PWA INSTALL LOGIC =================
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); deferredPrompt = e; installAppBtn.style.display = 'block';
+// STATS & JOURNALS
+let totalListenSeconds = parseInt(localStorage.getItem('nmt_total_listen_secs') || '0');
+let songPlayCounts = JSON.parse(localStorage.getItem('nmt_song_plays') || '{}');
+let songJournals = JSON.parse(localStorage.getItem('nmt_song_journals') || '{}');
+let activeJournalSongId = null;
+
+// Cập nhật thời gian nghe ngầm
+setInterval(() => {
+    if (!music.paused) {
+        totalListenSeconds++;
+        localStorage.setItem('nmt_total_listen_secs', totalListenSeconds);
+    }
+}, 1000);
+
+// ================= SMART SHARE CARD LOGIC =================
+shareCardTrigger.addEventListener('click', () => {
+    const song = songs[musicIndex];
+    scTitle.textContent = song.displayName;
+    scArtist.textContent = song.artist;
+    
+    // Đảm bảo luôn có ảnh fallback an toàn, tránh lỗi mất ảnh
+    const cover = (song.cover && song.cover.trim() !== '') ? song.cover : './assets/1.jpg';
+    scCover.src = cover;
+    scBg.style.backgroundImage = `url('${cover}')`;
+    
+    // Tạo URL thông minh chứa tham số ?song=ID để khi quét xong tự nhảy vào đúng bài
+    const cleanOrigin = window.location.origin + window.location.pathname;
+    const shareUrl = `${cleanOrigin}?song=${song.id}`;
+    scQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
+    
+    shareModal.classList.add('active');
 });
-installAppBtn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') showToast('MUSIC APP installed successfully!');
-        deferredPrompt = null;
-    } else { showToast('App is already installed or ready!'); }
+
+closeShareBtn.addEventListener('click', () => shareModal.classList.remove('active'));
+shareModal.addEventListener('click', (e) => { if (e.target === shareModal) shareModal.classList.remove('active'); });
+
+downloadCardBtn.addEventListener('click', () => {
+    showToast('Generating share card...');
+    const previewElement = document.getElementById('share-card-preview');
+    
+    // Đảm bảo ảnh QR và ảnh bìa đã tải hoàn tất 100% trước khi chụp canvas
+    const executeCapture = () => {
+        html2canvas(previewElement, { 
+            useCORS: true, 
+            allowTaint: true, 
+            scale: 2 
+        }).then(canvas => {
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `MusicApp_${songs[musicIndex].displayName.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                showToast('Card downloaded successfully!');
+                shareModal.classList.remove('active');
+            }, 'image/png');
+        }).catch(err => {
+            console.error(err);
+            showToast('Error generating card!');
+        });
+    };
+
+    if (scQrImg.complete && scCover.complete) {
+        executeCapture();
+    } else {
+        let loadedCount = 0;
+        const checkLoaded = () => {
+            loadedCount++;
+            if (loadedCount >= 2) executeCapture();
+        };
+        scQrImg.onload = checkLoaded;
+        scQrImg.onerror = checkLoaded;
+        scCover.onload = checkLoaded;
+        scCover.onerror = checkLoaded;
+    }
 });
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.log(err)); });
+
+// ================= SONG JOURNAL LOGIC =================
+function openJournalModal(songId) {
+    activeJournalSongId = songId;
+    const song = songs.find(s => s.id === songId);
+    journalSongTitle.textContent = `${song.displayName} - ${song.artist}`;
+    journalInput.value = songJournals[songId] || '';
+    journalModal.classList.add('active');
+}
+
+closeJournalBtn.addEventListener('click', () => journalModal.classList.remove('active'));
+journalModal.addEventListener('click', (e) => { if (e.target === journalModal) journalModal.classList.remove('active'); });
+
+saveJournalBtn.addEventListener('click', () => {
+    const note = journalInput.value.trim();
+    if (note) {
+        songJournals[activeJournalSongId] = note;
+        showToast('Journal note saved!');
+    } else {
+        delete songJournals[activeJournalSongId];
+        showToast('Journal note deleted!');
+    }
+    localStorage.setItem('nmt_song_journals', JSON.stringify(songJournals));
+    journalModal.classList.remove('active');
+    renderPlaylist();
+});
+
+// ================= MINI WRAPPED LOGIC =================
+function updateWrappedStats() {
+    const mins = Math.floor(totalListenSeconds / 60);
+    statTotalTime.textContent = `${mins} mins`;
+    
+    let topSongName = 'None yet';
+    let maxPlays = 0;
+    for (const id in songPlayCounts) {
+        if (songPlayCounts[id] > maxPlays) {
+            maxPlays = songPlayCounts[id];
+            const found = songs.find(s => s.id == id);
+            if (found) topSongName = found.displayName;
+        }
+    }
+    statTopSong.textContent = topSongName;
+    statTopTheme.textContent = currentTheme.toUpperCase();
 }
 
 // ================= AUTO-HIDE UI =================
 let hideUITimer;
 function resetHideUI() {
+    if (isZenMode) return;
     appLayout.classList.remove('auto-hidden'); document.body.style.cursor = 'default'; clearTimeout(hideUITimer);
-    if (!music.paused && !isZenMode) { hideUITimer = setTimeout(() => { appLayout.classList.add('auto-hidden'); document.body.style.cursor = 'none'; }, 3000); }
+    if (!music.paused) { hideUITimer = setTimeout(() => { appLayout.classList.add('auto-hidden'); document.body.style.cursor = 'none'; }, 3000); }
 }
 ['mousemove', 'touchstart', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, resetHideUI));
 music.addEventListener('play', resetHideUI);
@@ -140,7 +268,7 @@ function formatTime(seconds) {
     return hours > 0 ? `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}` : `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
-// ================= INIT & SAVE =================
+// ================= INIT & SAVE (XỬ LÝ ĐỌC THAM SỐ ?song=ID) =================
 function initSongs() {
     const savedFavs = localStorage.getItem('aurora_favorites_tri'); let favIds = savedFavs ? JSON.parse(savedFavs) : [];
     songs = baseSongs.map(song => ({ ...song, isFavorite: favIds.includes(song.id) }));
@@ -149,13 +277,24 @@ function initSongs() {
     if (localStorage.getItem('zen_theme')) { currentTheme = localStorage.getItem('zen_theme'); document.querySelectorAll('.theme-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('data-theme') === currentTheme) b.classList.add('active'); }); applyTheme(currentTheme); }
     if (localStorage.getItem('zen_particle')) { currentParticle = localStorage.getItem('zen_particle'); document.querySelectorAll('.particle-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('data-particle') === currentParticle) b.classList.add('active'); }); initParticles(); } else { document.querySelector('[data-particle="fireflies"]').classList.add('active'); initParticles(); }
 
-    const savedState = JSON.parse(localStorage.getItem('nmt_music_state'));
-    if (savedState) {
-        musicIndex = savedState.index >= 0 && savedState.index < songs.length ? savedState.index : 0;
-        isShuffle = savedState.isShuffle || false; isRepeat = savedState.isRepeat || false;
-        music.volume = savedState.volume !== undefined ? savedState.volume : 1; previousVolume = music.volume > 0 ? music.volume : 1;
-        volumeSlider.value = music.volume; if(isShuffle) shuffleBtn.classList.add('active'); if(isRepeat) repeatBtn.classList.add('active'); setVolumeIcon(music.volume);
-        music.addEventListener('loadedmetadata', function setTime() { if (savedState.currentTime) music.currentTime = savedState.currentTime; music.removeEventListener('loadedmetadata', setTime); });
+    // Đọc URL xem có tham số ?song=ID do quét QR không
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedSongId = urlParams.get('song');
+    
+    if (sharedSongId) {
+        const foundIndex = songs.findIndex(s => s.id == sharedSongId);
+        if (foundIndex !== -1) {
+            musicIndex = foundIndex;
+        }
+    } else {
+        const savedState = JSON.parse(localStorage.getItem('nmt_music_state'));
+        if (savedState) {
+            musicIndex = savedState.index >= 0 && savedState.index < songs.length ? savedState.index : 0;
+            isShuffle = savedState.isShuffle || false; isRepeat = savedState.isRepeat || false;
+            music.volume = savedState.volume !== undefined ? savedState.volume : 1; previousVolume = music.volume > 0 ? music.volume : 1;
+            volumeSlider.value = music.volume; if(isShuffle) shuffleBtn.classList.add('active'); if(isRepeat) repeatBtn.classList.add('active'); setVolumeIcon(music.volume);
+            music.addEventListener('loadedmetadata', function setTime() { if (savedState.currentTime) music.currentTime = savedState.currentTime; music.removeEventListener('loadedmetadata', setTime); });
+        }
     }
 }
 function savePlayerState() { localStorage.setItem('nmt_music_state', JSON.stringify({ index: musicIndex, currentTime: music.currentTime, volume: music.volume, isShuffle: isShuffle, isRepeat: isRepeat })); }
@@ -188,12 +327,20 @@ function applyDynamicAccent(coverUrl) { if (currentTheme !== 'auto') return; if 
 
 function loadMusic(index) {
     musicIndex = index; const song = songs[musicIndex]; music.src = song.path; title.textContent = song.displayName; artist.textContent = song.artist; document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
+    
+    songPlayCounts[song.id] = (songPlayCounts[song.id] || 0) + 1;
+    localStorage.setItem('nmt_song_plays', JSON.stringify(songPlayCounts));
+
+    if (songJournals[song.id]) {
+        setTimeout(() => { showToast(`📝 Note: ${songJournals[song.id]}`); }, 1000);
+    }
+
     playHistory = playHistory.filter(id => id !== song.id); playHistory.unshift(song.id); if(playHistory.length > 20) playHistory.pop(); localStorage.setItem('zen_history', JSON.stringify(playHistory));
 
     if ('mediaSession' in navigator) { const coverUrl = new URL(song.cover || './assets/music.png', window.location.href).href; navigator.mediaSession.metadata = new MediaMetadata({ title: song.displayName, artist: song.artist, album: 'Chill & Relax', artwork: [{ src: coverUrl, sizes: '512x512', type: 'image/png' }] }); navigator.mediaSession.setActionHandler('play', playMusic); navigator.mediaSession.setActionHandler('pause', () => fadeOutAndPause(500)); navigator.mediaSession.setActionHandler('previoustrack', () => changeMusic(-1)); navigator.mediaSession.setActionHandler('nexttrack', () => changeMusic(1)); }
     const customBg = localStorage.getItem('zen_custom_bg_' + song.id); if (customBg) applyBackground(customBg); else { if (song.bgVideo) applyBackground(song.bgVideo); else applyBackground(song.cover || './assets/1.jpg', true); }
     if (song.cover) applyDynamicAccent(song.cover); else applyDynamicAccent(null);
-    if(currentTab !== 'settings') renderPlaylist(); savePlayerState();
+    if(currentTab !== 'settings' && currentTab !== 'wrapped') renderPlaylist(); savePlayerState();
 }
 
 function applyBackground(source, isFallback = false) {
@@ -222,17 +369,58 @@ function getFilteredSongs() { if (currentTab === 'history') return playHistory.m
 searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderPlaylist(); });
 
 function renderPlaylist() {
-    const container = currentTab === 'history' ? historyContent : playlistContent; container.innerHTML = ''; let displaySongs = getFilteredSongs();
-    if (displaySongs.length === 0) { container.innerHTML = '<p style="color:#aaa; text-align:center; font-size:13px; margin-top:20px;">Empty...</p>'; return; }
+    const targetContainer = currentTab === 'history' ? historyContent : playlistContent;
+    targetContainer.innerHTML = ''; 
+    let displaySongs = getFilteredSongs();
+    if (displaySongs.length === 0) { targetContainer.innerHTML = '<p style="color:#aaa; text-align:center; font-size:13px; margin-top:20px;">Empty...</p>'; return; }
+    
     displaySongs.forEach((song, index) => {
         const originalIndex = songs.findIndex(s => s.id === song.id), isActive = (originalIndex === musicIndex);
         const item = document.createElement('div'); item.className = `track ${isActive ? 'active-track' : ''}`;
-        const numDisplay = isActive ? '<i class="fa-solid fa-chart-simple"></i>' : (index + 1), heartClass = song.isFavorite ? 'fa-solid fa-heart favorited' : 'fa-regular fa-heart';
-        item.innerHTML = `<div class="track-info"><span class="track-num">${numDisplay}</span><div class="track-details"><strong>${song.displayName}</strong><span>${song.artist}</span></div></div><div class="track-actions"><i class="${heartClass} favorite-btn"></i><span class="track-time" id="dur-${song.id}-${currentTab}">--:--</span></div>`;
-        if (songDurationsCache[song.id]) item.querySelector('.track-time').textContent = songDurationsCache[song.id]; else { const tempAudio = new Audio(song.path); tempAudio.preload = "metadata"; tempAudio.addEventListener('loadedmetadata', () => { const timeStr = formatTime(tempAudio.duration); songDurationsCache[song.id] = timeStr; const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); if (dEl) dEl.textContent = timeStr; }); tempAudio.addEventListener('error', () => { const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); if (dEl) dEl.textContent = "--:--"; }); }
+        const numDisplay = isActive ? '<i class="fa-solid fa-chart-simple"></i>' : (index + 1);
+        const heartClass = song.isFavorite ? 'fa-solid fa-heart favorited' : 'fa-regular fa-heart';
+        const hasNoteClass = songJournals[song.id] ? 'has-note' : '';
+        
+        item.innerHTML = `
+            <div class="track-info">
+                <span class="track-num">${numDisplay}</span>
+                <div class="track-details">
+                    <strong>${song.displayName}</strong>
+                    <span>${song.artist}</span>
+                </div>
+            </div>
+            <div class="track-actions">
+                <i class="fa-solid fa-book-open journal-btn ${hasNoteClass}" title="Song Journal"></i>
+                <i class="${heartClass} favorite-btn" title="Favorite"></i>
+                <span class="track-time" id="dur-${song.id}-${currentTab}">--:--</span>
+            </div>`;
+            
+        if (songDurationsCache[song.id]) item.querySelector('.track-time').textContent = songDurationsCache[song.id]; 
+        else { 
+            const tempAudio = new Audio(song.path); tempAudio.preload = "metadata"; 
+            tempAudio.addEventListener('loadedmetadata', () => { 
+                const timeStr = formatTime(tempAudio.duration); songDurationsCache[song.id] = timeStr; 
+                const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); if (dEl) dEl.textContent = timeStr; 
+            }); 
+            tempAudio.addEventListener('error', () => { 
+                const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); if (dEl) dEl.textContent = "--:--"; 
+            }); 
+        }
+        
         item.querySelector('.track-info').addEventListener('click', () => { loadMusic(originalIndex); playMusic(); });
-        item.querySelector('.favorite-btn').addEventListener('click', (e) => { e.stopPropagation(); songs[originalIndex].isFavorite = !songs[originalIndex].isFavorite; e.currentTarget.classList.add('burst'); setTimeout(() => e.currentTarget.classList.remove('burst'), 400); showToast(songs[originalIndex].isFavorite ? `Added to Favorites` : `Removed from Favorites`); localStorage.setItem('aurora_favorites_tri', JSON.stringify(songs.filter(s => s.isFavorite).map(s => s.id))); renderPlaylist(); });
-        container.appendChild(item);
+        
+        item.querySelector('.journal-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            openJournalModal(song.id);
+        });
+
+        item.querySelector('.favorite-btn').addEventListener('click', (e) => { 
+            e.stopPropagation(); songs[originalIndex].isFavorite = !songs[originalIndex].isFavorite; 
+            showToast(songs[originalIndex].isFavorite ? `Added to Favorites` : `Removed from Favorites`); 
+            localStorage.setItem('aurora_favorites_tri', JSON.stringify(songs.filter(s => s.isFavorite).map(s => s.id))); 
+            renderPlaylist(); 
+        });
+        targetContainer.appendChild(item);
     });
 }
 
@@ -259,17 +447,49 @@ repeatBtn.addEventListener('click', () => { isRepeat = !isRepeat; repeatBtn.clas
 
 // ================= UI TOGGLES & SHORTCUTS =================
 playlistToggleBtn.addEventListener('click', () => { playlistDrawer.classList.toggle('active'); }); 
-drawerCloseBtn.addEventListener('click', () => { playlistDrawer.classList.remove('active'); });
 
-tabBtns.forEach(btn => { btn.addEventListener('click', () => { tabBtns.forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTab = btn.getAttribute('data-tab'); document.getElementById('search-box').style.display = (currentTab === 'settings') ? 'none' : 'block'; playlistContent.classList.remove('active'); historyContent.classList.remove('active'); settingsContent.classList.remove('active'); if (currentTab === 'settings') settingsContent.classList.add('active'); else if (currentTab === 'history') { historyContent.classList.add('active'); renderPlaylist(); } else { playlistContent.classList.add('active'); renderPlaylist(); } }); });
+tabBtns.forEach(btn => { 
+    btn.addEventListener('click', () => { 
+        tabBtns.forEach(b => b.classList.remove('active')); 
+        btn.classList.add('active'); 
+        currentTab = btn.getAttribute('data-tab');
+        
+        document.getElementById('search-box').style.display = (currentTab === 'settings' || currentTab === 'wrapped') ? 'none' : 'block'; 
+        playlistContent.classList.remove('active'); 
+        historyContent.classList.remove('active'); 
+        wrappedContent.classList.remove('active');
+        settingsContent.classList.remove('active'); 
+        
+        if (currentTab === 'settings') {
+            settingsContent.classList.add('active');
+        } else if (currentTab === 'wrapped') {
+            wrappedContent.classList.add('active');
+            updateWrappedStats();
+        } else if (currentTab === 'history') { 
+            historyContent.classList.add('active'); 
+            renderPlaylist(); 
+        } else { 
+            playlistContent.classList.add('active'); 
+            renderPlaylist(); 
+        } 
+    }); 
+});
 
 function toggleZenMode() {
-    if (isZenMode) { isZenMode = false; appLayout.classList.remove('zen-mode'); document.body.classList.remove('zen-active'); clearTimeout(zenTimer); clearInterval(zenCountdown); zenToastEl.classList.remove('show'); showToast('Zen Mode exited'); } 
-    else { if (zenTimer) { clearTimeout(zenTimer); clearInterval(zenCountdown); zenToastEl.classList.remove('show'); zenTimer = null; showToast('Zen Mode canceled'); return; } let timeLeft = 5; zenToastEl.textContent = `Hiding UI in ${timeLeft}s... (Press H to cancel)`; zenToastEl.classList.add('show'); zenCountdown = setInterval(() => { timeLeft--; zenToastEl.textContent = `Hiding UI in ${timeLeft}s... (Press H to cancel)`; if (timeLeft <= 0) clearInterval(zenCountdown); }, 1000); zenTimer = setTimeout(() => { isZenMode = true; appLayout.classList.add('zen-mode'); document.body.classList.add('zen-active'); zenToastEl.classList.remove('show'); zenTimer = null; }, 5000); }
+    isZenMode = !isZenMode;
+    if (isZenMode) {
+        appLayout.classList.add('zen-mode'); 
+        document.body.classList.add('zen-active');
+        showToast('Zen Mode: ON');
+    } else {
+        appLayout.classList.remove('zen-mode'); 
+        document.body.classList.remove('zen-active');
+        showToast('Zen Mode: OFF');
+    }
 }
 
 document.addEventListener('keydown', (e) => {
-    if (e.target.tagName.toLowerCase() === 'input') return;
+    if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea') return;
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePlay(); }
     if (e.code === 'ArrowRight') { e.preventDefault(); changeMusic(1); }
     if (e.code === 'ArrowLeft') { e.preventDefault(); changeMusic(-1); }
@@ -281,4 +501,5 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'KeyL' || e.key.toLowerCase() === 'l') { e.preventDefault(); repeatBtn.click(); }
 });
 
-initSongs(); loadMusic(musicIndex);
+initSongs(); 
+loadMusic(musicIndex);
