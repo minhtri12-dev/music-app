@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="assets/music.png">
     <link rel="manifest" href="manifest.json">
-    <title>MUSIC APP WITH MY FRIEND | BY NMT</title>
+    <title>MUSIC APP WITH MY FRIEND| BY NMT</title>
 </head>
 <body>
 
@@ -28,10 +28,11 @@
 
     <div class="app-layout">
         
-        <!-- Sidebar Drawer -->
+        <!-- Sidebar / Mobile Modal Drawer -->
         <div class="side-playlist" id="playlist-drawer">
             <div class="drawer-header">
                 <h3>TrackList</h3>
+                <i class="fa-solid fa-xmark drawer-close-btn" id="drawer-close-btn" title="Close Menu"></i>
             </div>
             
             <div class="filter-tabs">
@@ -113,14 +114,14 @@
             </div>
         </div>
 
-        <!-- Main Player (Giao diện phẳng chuẩn mực, không lỗi chữ) -->
+        <!-- Main Player -->
         <div class="glass-player" id="glass-player">
             <div class="top-row">
                 <div class="top-left">
                     <i class="fa-solid fa-list-ul" id="playlist-toggle-btn" title="Toggle Tracklist"></i>
                 </div>
                 <div class="top-center">
-                    <span class="app-brand">CHILL & RELAX</span>
+                    <span class="app-brand">CHIL & RELAX</span>
                 </div>
                 <div class="top-right">
                     <span id="track-count">TRACK 1 OF 24</span>

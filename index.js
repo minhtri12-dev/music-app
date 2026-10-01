@@ -16,6 +16,8 @@ const title = document.getElementById('music-title'),
     historyContent = document.getElementById('history-content'),
     settingsContent = document.getElementById('settings-content'),
     playlistToggleBtn = document.getElementById('playlist-toggle-btn'),
+    drawerCloseBtn = document.getElementById('drawer-close-btn'),
+    playlistDrawer = document.getElementById('playlist-drawer'),
     tabBtns = document.querySelectorAll('.tab-btn'),
     mainBg = document.getElementById('main-bg'),
     mainVideo = document.getElementById('main-video'),
@@ -256,7 +258,9 @@ shuffleBtn.addEventListener('click', () => { isShuffle = !isShuffle; shuffleBtn.
 repeatBtn.addEventListener('click', () => { isRepeat = !isRepeat; repeatBtn.classList.toggle('active', isRepeat); showToast(isRepeat ? 'Repeat: ON' : 'Repeat: OFF'); savePlayerState(); });
 
 // ================= UI TOGGLES & SHORTCUTS =================
-playlistToggleBtn.addEventListener('click', () => { document.getElementById('playlist-drawer').classList.toggle('active'); }); 
+playlistToggleBtn.addEventListener('click', () => { playlistDrawer.classList.toggle('active'); }); 
+drawerCloseBtn.addEventListener('click', () => { playlistDrawer.classList.remove('active'); });
+
 tabBtns.forEach(btn => { btn.addEventListener('click', () => { tabBtns.forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTab = btn.getAttribute('data-tab'); document.getElementById('search-box').style.display = (currentTab === 'settings') ? 'none' : 'block'; playlistContent.classList.remove('active'); historyContent.classList.remove('active'); settingsContent.classList.remove('active'); if (currentTab === 'settings') settingsContent.classList.add('active'); else if (currentTab === 'history') { historyContent.classList.add('active'); renderPlaylist(); } else { playlistContent.classList.add('active'); renderPlaylist(); } }); });
 
 function toggleZenMode() {
