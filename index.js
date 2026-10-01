@@ -480,11 +480,11 @@ function toggleZenMode() {
     if (isZenMode) {
         appLayout.classList.add('zen-mode'); 
         document.body.classList.add('zen-active');
-        showToast('Zen Mode: ON');
+        showToast('Transparency Mode: ON');
     } else {
         appLayout.classList.remove('zen-mode'); 
         document.body.classList.remove('zen-active');
-        showToast('Zen Mode: OFF');
+        showToast('Transparency Mode: OFF');
     }
 }
 
