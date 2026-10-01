@@ -86,32 +86,36 @@ let isZenMode = false, previousVolume = 1;
 let currentTheme = 'auto', currentParticle = 'fireflies';
 const songDurationsCache = {};
 
-// STATS & JOURNALS
 let totalListenSeconds = parseInt(localStorage.getItem('nmt_total_listen_secs') || '0');
 let songPlayCounts = JSON.parse(localStorage.getItem('nmt_song_plays') || '{}');
 let songJournals = JSON.parse(localStorage.getItem('nmt_song_journals') || '{}');
 let activeJournalSongId = null;
+let hasCountedPlay = false;
 
-// Cập nhật thời gian nghe ngầm
 setInterval(() => {
     if (!music.paused) {
         totalListenSeconds++;
         localStorage.setItem('nmt_total_listen_secs', totalListenSeconds);
+
+        if (!hasCountedPlay && music.currentTime >= 10) {
+            hasCountedPlay = true;
+            const currentSong = songs[musicIndex];
+            songPlayCounts[currentSong.id] = (songPlayCounts[currentSong.id] || 0) + 1;
+            localStorage.setItem('nmt_song_plays', JSON.stringify(songPlayCounts));
+        }
     }
 }, 1000);
 
-// ================= SMART SHARE CARD LOGIC =================
+// SHARE CARD
 shareCardTrigger.addEventListener('click', () => {
     const song = songs[musicIndex];
     scTitle.textContent = song.displayName;
     scArtist.textContent = song.artist;
     
-    // Đảm bảo luôn có ảnh fallback an toàn, tránh lỗi mất ảnh
     const cover = (song.cover && song.cover.trim() !== '') ? song.cover : './assets/1.jpg';
     scCover.src = cover;
     scBg.style.backgroundImage = `url('${cover}')`;
     
-    // Tạo URL thông minh chứa tham số ?song=ID để khi quét xong tự nhảy vào đúng bài
     const cleanOrigin = window.location.origin + window.location.pathname;
     const shareUrl = `${cleanOrigin}?song=${song.id}`;
     scQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl)}`;
@@ -126,7 +130,6 @@ downloadCardBtn.addEventListener('click', () => {
     showToast('Generating share card...');
     const previewElement = document.getElementById('share-card-preview');
     
-    // Đảm bảo ảnh QR và ảnh bìa đã tải hoàn tất 100% trước khi chụp canvas
     const executeCapture = () => {
         html2canvas(previewElement, { 
             useCORS: true, 
@@ -167,7 +170,7 @@ downloadCardBtn.addEventListener('click', () => {
     }
 });
 
-// ================= SONG JOURNAL LOGIC =================
+// JOURNAL
 function openJournalModal(songId) {
     activeJournalSongId = songId;
     const song = songs.find(s => s.id === songId);
@@ -193,7 +196,7 @@ saveJournalBtn.addEventListener('click', () => {
     renderPlaylist();
 });
 
-// ================= MINI WRAPPED LOGIC =================
+// WRAPPED STATS
 function updateWrappedStats() {
     const mins = Math.floor(totalListenSeconds / 60);
     statTotalTime.textContent = `${mins} mins`;
@@ -211,7 +214,7 @@ function updateWrappedStats() {
     statTopTheme.textContent = currentTheme.toUpperCase();
 }
 
-// ================= AUTO-HIDE UI =================
+// AUTO-HIDE UI
 let hideUITimer;
 function resetHideUI() {
     if (isZenMode) return;
@@ -222,7 +225,7 @@ function resetHideUI() {
 music.addEventListener('play', resetHideUI);
 music.addEventListener('pause', () => { clearTimeout(hideUITimer); appLayout.classList.remove('auto-hidden'); document.body.style.cursor = 'default'; });
 
-// ================= PARTICLE SWITCHER =================
+// PARTICLES
 const canvas = document.getElementById('particle-canvas'), ctx = canvas.getContext('2d');
 let particlesArray = [];
 function initParticles() {
@@ -257,7 +260,7 @@ document.querySelectorAll('.particle-btn').forEach(btn => {
     });
 });
 
-// ================= TIỆN ÍCH CHUNG =================
+// TOAST & FORMAT
 function showToast(message) {
     const toast = document.createElement('div'); toast.className = 'custom-toast'; toast.textContent = message; toastContainer.appendChild(toast);
     setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 300); }, 2000);
@@ -268,7 +271,7 @@ function formatTime(seconds) {
     return hours > 0 ? `${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}` : `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
-// ================= INIT & SAVE (XỬ LÝ ĐỌC THAM SỐ ?song=ID) =================
+// INIT SONGS & QR PARAM
 function initSongs() {
     const savedFavs = localStorage.getItem('aurora_favorites_tri'); let favIds = savedFavs ? JSON.parse(savedFavs) : [];
     songs = baseSongs.map(song => ({ ...song, isFavorite: favIds.includes(song.id) }));
@@ -277,7 +280,6 @@ function initSongs() {
     if (localStorage.getItem('zen_theme')) { currentTheme = localStorage.getItem('zen_theme'); document.querySelectorAll('.theme-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('data-theme') === currentTheme) b.classList.add('active'); }); applyTheme(currentTheme); }
     if (localStorage.getItem('zen_particle')) { currentParticle = localStorage.getItem('zen_particle'); document.querySelectorAll('.particle-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('data-particle') === currentParticle) b.classList.add('active'); }); initParticles(); } else { document.querySelector('[data-particle="fireflies"]').classList.add('active'); initParticles(); }
 
-    // Đọc URL xem có tham số ?song=ID do quét QR không
     const urlParams = new URLSearchParams(window.location.search);
     const sharedSongId = urlParams.get('song');
     
@@ -300,7 +302,7 @@ function initSongs() {
 function savePlayerState() { localStorage.setItem('nmt_music_state', JSON.stringify({ index: musicIndex, currentTime: music.currentTime, volume: music.volume, isShuffle: isShuffle, isRepeat: isRepeat })); }
 setInterval(savePlayerState, 2000);
 
-// ================= PLAY / PAUSE LOGIC =================
+// PLAY/PAUSE
 function fadeOutAndPause(durationMs = 800) {
     if (fadeInterval) clearInterval(fadeInterval); const step = music.volume / (durationMs / 50), currentVol = music.volume;
     fadeInterval = setInterval(() => { if (music.volume - step > 0) music.volume -= step; else { music.volume = 0; music.pause(); clearInterval(fadeInterval); music.volume = currentVol; updatePlayBtnState(); } }, 50);
@@ -320,16 +322,19 @@ function updatePlayBtnState() {
     savePlayerState();
 }
 
-// ================= THEMES & BACKGROUNDS =================
+// THEME & BG
 function applyTheme(theme) { document.body.className = ''; if (theme !== 'auto') document.body.classList.add(`theme-${theme}`); localStorage.setItem('zen_theme', theme); }
 document.querySelectorAll('.theme-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTheme = btn.getAttribute('data-theme'); applyTheme(currentTheme); if (currentTheme === 'auto') applyDynamicAccent(songs[musicIndex].cover); showToast(`Mood: ${btn.textContent}`); }); });
 function applyDynamicAccent(coverUrl) { if (currentTheme !== 'auto') return; if (!coverUrl || coverUrl.includes('music.png')) document.documentElement.style.setProperty('--accent-color', '#fff'); else document.documentElement.style.setProperty('--accent-color', '#ec4899'); }
 
 function loadMusic(index) {
-    musicIndex = index; const song = songs[musicIndex]; music.src = song.path; title.textContent = song.displayName; artist.textContent = song.artist; document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
-    
-    songPlayCounts[song.id] = (songPlayCounts[song.id] || 0) + 1;
-    localStorage.setItem('nmt_song_plays', JSON.stringify(songPlayCounts));
+    musicIndex = index; 
+    hasCountedPlay = false;
+    const song = songs[musicIndex]; 
+    music.src = song.path; 
+    title.textContent = song.displayName; 
+    artist.textContent = song.artist; 
+    document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
 
     if (songJournals[song.id]) {
         setTimeout(() => { showToast(`📝 Note: ${songJournals[song.id]}`); }, 1000);
@@ -358,7 +363,7 @@ uploadInput.addEventListener('change', (e) => {
 });
 document.getElementById('reset-bg-btn').addEventListener('click', () => { localStorage.removeItem('zen_custom_bg_' + songs[musicIndex].id); bgInput.value = ''; showToast(`Background reset`); loadMusic(musicIndex); });
 
-// ================= PLAYLIST & LISTS =================
+// PLAYLIST
 function changeMusic(direction) {
     let playableSongs = getFilteredSongs(); if (playableSongs.length === 0) { fadeOutAndPause(); return; }
     let currentFilteredIndex = playableSongs.findIndex(s => s.id === songs[musicIndex].id); if (currentFilteredIndex === -1) currentFilteredIndex = 0; else { if (isShuffle) { let randomIndex; do { randomIndex = Math.floor(Math.random() * playableSongs.length); } while (randomIndex === currentFilteredIndex && playableSongs.length > 1); currentFilteredIndex = randomIndex; } else currentFilteredIndex = (currentFilteredIndex + direction + playableSongs.length) % playableSongs.length; }
@@ -395,16 +400,21 @@ function renderPlaylist() {
                 <span class="track-time" id="dur-${song.id}-${currentTab}">--:--</span>
             </div>`;
             
-        if (songDurationsCache[song.id]) item.querySelector('.track-time').textContent = songDurationsCache[song.id]; 
-        else { 
-            const tempAudio = new Audio(song.path); tempAudio.preload = "metadata"; 
+        if (songDurationsCache[song.id]) {
+            item.querySelector('.track-time').textContent = songDurationsCache[song.id];
+        } else { 
+            const tempAudio = new Audio(song.path); 
+            tempAudio.preload = "metadata"; 
             tempAudio.addEventListener('loadedmetadata', () => { 
-                const timeStr = formatTime(tempAudio.duration); songDurationsCache[song.id] = timeStr; 
-                const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); if (dEl) dEl.textContent = timeStr; 
-            }); 
+                const timeStr = formatTime(tempAudio.duration); 
+                songDurationsCache[song.id] = timeStr; 
+                const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); 
+                if (dEl) dEl.textContent = timeStr; 
+            }, { once: true }); 
             tempAudio.addEventListener('error', () => { 
-                const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); if (dEl) dEl.textContent = "--:--"; 
-            }); 
+                const dEl = document.getElementById(`dur-${song.id}-${currentTab}`); 
+                if (dEl) dEl.textContent = "--:--"; 
+            }, { once: true }); 
         }
         
         item.querySelector('.track-info').addEventListener('click', () => { loadMusic(originalIndex); playMusic(); });
@@ -424,7 +434,7 @@ function renderPlaylist() {
     });
 }
 
-// ================= VOLUME & TIMERS =================
+// VOLUME & TIMERS
 music.addEventListener('timeupdate', () => { const { duration, currentTime } = music; if (isNaN(duration)) return; progress.style.width = `${(currentTime / duration) * 100}%`; currentTimeEl.textContent = formatTime(currentTime); durationEl.textContent = "-" + formatTime(duration - currentTime); });
 playerProgress.addEventListener('click', (e) => music.currentTime = (e.offsetX / playerProgress.clientWidth) * music.duration);
 function setVolumeIcon(vol) { volumeIcon.className = 'fa-solid ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high')); }
@@ -445,7 +455,7 @@ playBtnWrapper.addEventListener('click', togglePlay); prevBtn.addEventListener('
 shuffleBtn.addEventListener('click', () => { isShuffle = !isShuffle; shuffleBtn.classList.toggle('active', isShuffle); showToast(isShuffle ? 'Shuffle: ON' : 'Shuffle: OFF'); savePlayerState(); });
 repeatBtn.addEventListener('click', () => { isRepeat = !isRepeat; repeatBtn.classList.toggle('active', isRepeat); showToast(isRepeat ? 'Repeat: ON' : 'Repeat: OFF'); savePlayerState(); });
 
-// ================= UI TOGGLES & SHORTCUTS =================
+// UI TOGGLES & SHORTCUTS
 playlistToggleBtn.addEventListener('click', () => { playlistDrawer.classList.toggle('active'); }); 
 
 tabBtns.forEach(btn => { 
@@ -480,11 +490,11 @@ function toggleZenMode() {
     if (isZenMode) {
         appLayout.classList.add('zen-mode'); 
         document.body.classList.add('zen-active');
-        showToast('Transparency Mode: ON');
+        showToast('Zen Mode: ON');
     } else {
         appLayout.classList.remove('zen-mode'); 
         document.body.classList.remove('zen-active');
-        showToast('Transparency Mode: OFF');
+        showToast('Zen Mode: OFF');
     }
 }
 
