@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Nạp font Instrument Serif (bản Italic) và Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="assets/music.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <title>MUSIC APP WITH MY FRIEND | BY NMT</title>
+</head>
+<body>
+
+    <!-- Backgrounds -->
+    <video autoplay muted loop playsinline class="background-video" id="main-video">
+        <source src="" type="video/mp4" id="video-source">
+    </video>
+    <img src="assets/1.jpg" class="background-img" id="main-bg" alt="Background">
+
+    <div class="bg-overlay"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="toast-container"></div>
+
+    <!-- SHARE CARD MODAL -->
+    <div class="modal-overlay" id="share-modal">
+        <div class="share-modal-content">
+            <div class="share-card-preview" id="share-card-preview">
+                <div class="sc-bg" id="sc-bg"></div>
+                <div class="sc-body">
+                    <div class="sc-cover-wrap">
+                        <img id="sc-cover" src="assets/music.png" alt="Cover">
+                    </div>
+                    <div class="sc-info">
+                        <h2 id="sc-title">Song Title</h2>
+                        <p id="sc-artist">Artist Name</p>
+                    </div>
+                </div>
+                <div class="sc-footer">
+                    <div class="sc-brand">
+                        <i class="fa-solid fa-music"></i>
+                        <span>Listening on <strong>MUSIC APP WITH ME</strong></span>
+                    </div>
+                    <div class="sc-qr" id="sc-qr">
+                        <img id="sc-qr-img" src="" alt="QR Code">
+                    </div>
+                </div>
+            </div>
+            <div class="share-modal-actions">
+                <button class="setting-btn action-btn interactive-hover" id="download-card-btn"><i class="fa-solid fa-download"></i> Download</button>
+                <button class="setting-btn danger-btn interactive-hover" id="close-share-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SONG JOURNAL MODAL -->
+    <div class="modal-overlay" id="journal-modal">
+        <div class="journal-box">
+            <h3><i class="fa-solid fa-book-open"></i> Song Journal</h3>
+            <p id="journal-song-title">Song Title</p>
+            <textarea id="journal-input" placeholder="Write your memory or feeling..."></textarea>
+            <div class="journal-actions">
+                <button class="setting-btn action-btn interactive-hover" id="save-journal-btn">Save Note</button>
+                <button class="setting-btn danger-btn interactive-hover" id="close-journal-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        
+        <!-- Sidebar / Mobile Bottom Sheet -->
+        <div class="side-playlist" id="playlist-drawer">
+            <div class="drawer-header">
+                <h3>TrackList</h3>
+                <i class="fa-solid fa-chevron-down close-drawer-btn interactive-hover" id="close-drawer-btn" title="Close"></i>
+            </div>
+            
+            <div class="filter-tabs">
+                <button class="tab-btn active interactive-hover" data-tab="all" title="All Tracks"><i class="fa-solid fa-music"></i></button>
+                <button class="tab-btn interactive-hover" data-tab="fav" title="Favorites"><i class="fa-solid fa-heart"></i></button>
+                <button class="tab-btn interactive-hover" data-tab="history" title="History"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                <button class="tab-btn interactive-hover" data-tab="wrapped" title="Wrapped"><i class="fa-solid fa-chart-pie"></i></button>
+                <button class="tab-btn interactive-hover" data-tab="settings" title="Settings"><i class="fa-solid fa-sliders"></i></button>
+            </div>
+
+            <div class="search-box" id="search-box">
+                <input type="text" id="search-input" placeholder="Search songs, artists...">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+
+            <div class="playlist-container active" id="playlist-content"></div>
+            <div class="playlist-container" id="history-content"></div>
+            
+            <div class="playlist-container" id="wrapped-content">
+                <div class="wrapped-card">
+                    <div class="wrapped-header"><i class="fa-solid fa-fire"></i> Mini Wrapped</div>
+                    <div class="wrapped-stat-item">
+                        <span>Total Listening Time</span>
+                        <strong id="stat-total-time">0 mins</strong>
+                    </div>
+                    <div class="wrapped-stat-item">
+                        <span>Most Played Track</span>
+                        <strong id="stat-top-song">None yet</strong>
+                    </div>
+                    <p class="wrapped-quote">"Music is the soundtrack of your life." </p>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="settings-container" id="settings-content">
+                <h4><i class="fa-solid fa-wand-magic-sparkles"></i> Particles Overlay</h4>
+                <div class="setting-group particle-grid">
+                    <button class="setting-btn particle-btn active interactive-hover" data-particle="fireflies">Fireflies</button>
+                    <button class="setting-btn particle-btn interactive-hover" data-particle="rain">Rain</button>
+                    <button class="setting-btn particle-btn interactive-hover" data-particle="snow">Snow</button>
+                </div>
+
+                <h4 style="margin-top: 25px;"><i class="fa-solid fa-stopwatch"></i> Sleep Timer</h4>
+                <div class="sleep-timer-wrapper">
+                    <input type="range" id="sleep-slider" min="0" max="60" step="5" value="0">
+                    <div class="sleep-timer-labels">
+                        <span>Off</span>
+                        <span id="timer-display" style="color: #fff; font-weight: 600;">0 min</span>
+                        <span>60m</span>
+                    </div>
+                </div>
+
+                <h4><i class="fa-solid fa-image"></i> Custom Cover / Background</h4>
+                <div class="search-box" style="padding: 0; margin-bottom: 12px;">
+                    <input type="text" class="custom-input" id="custom-bg-input" placeholder="Paste link here...">
+                </div>
+                <input type="file" id="custom-bg-upload" accept="image/*" style="display: none;">
+                <div class="setting-group" style="display: flex; gap: 8px;">
+                    <button class="setting-btn action-btn interactive-hover" id="apply-bg-btn" style="flex: 1;">Apply Link</button>
+                    <button class="setting-btn action-btn interactive-hover" id="upload-bg-btn" style="flex: 1;"><i class="fa-solid fa-upload"></i> Upload</button>
+                    <button class="setting-btn danger-btn interactive-hover" id="reset-bg-btn" style="flex: 1;">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Player -->
+        <div class="glass-player" id="glass-player">
+            <div class="top-row">
+                <div class="top-left">
+                    <i class="fa-solid fa-list-ul interactive-hover" id="playlist-toggle-btn" title="Toggle Tracklist"></i>
+                </div>
+                <div class="top-center">
+                    <span class="app-brand">CHILL & RELAX</span>
+                </div>
+                <div class="top-right">
+                    <i class="fa-solid fa-share-nodes interactive-hover" id="share-card-trigger" title="Share Song Card"></i>
+                    <span id="track-count">TRACK 1 OF 25</span>
+                </div>
+            </div>
+            
+            <div class="center-info">
+                <div class="modern-cd" id="cd-element">
+                    <div class="cd-hole"></div>
+                </div>
+                
+                <h1 class="song-title" id="music-title">Song Title</h1>
+                <div class="artist" id="music-artist">ARTIST NAME</div>
+            </div>
+
+            <div class="bottom-area">
+                <div class="player-progress-container">
+                    <span id="current-time" class="time-text">0:00</span>
+                    <div class="player-progress" id="player-progress">
+                        <div class="progress" id="progress"></div>
+                    </div>
+                    <span id="duration" class="time-text">0:00</span>
+                </div>
+
+                <div class="controls-row">
+                    <div class="main-controls">
+                        <i class="fa-solid fa-shuffle interactive-hover" id="shuffle" title="Shuffle"></i>
+                        <i class="fa-solid fa-backward-step interactive-hover" id="prev" title="Previous"></i>
+                        <div class="play-btn-wrapper interactive-hover" id="play-btn-wrapper">
+                            <i class="fa-solid fa-play" id="play" title="Play"></i>
+                        </div>
+                        <i class="fa-solid fa-forward-step interactive-hover" id="next" title="Next"></i>
+                        <i class="fa-solid fa-repeat interactive-hover" id="repeat" title="Repeat (L)"></i>
+                    </div>
+                    
+                    <div class="volume-control">
+                        <i class="fa-solid fa-volume-high interactive-hover" id="volume-icon" title="Mute/Unmute (M)"></i>
+                        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="index.js"></script>
+</body>
+</html>
