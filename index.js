@@ -47,7 +47,9 @@ const title = document.getElementById('music-title'),
     statTotalTime = document.getElementById('stat-total-time'),
     statTopSong = document.getElementById('stat-top-song'),
     sleepSlider = document.getElementById('sleep-slider'),
-    timerDisplay = document.getElementById('timer-display');
+    timerDisplay = document.getElementById('timer-display'),
+    speedSlider = document.getElementById('speed-slider'),
+    speedDisplay = document.getElementById('speed-display');
 
 const music = new Audio();
 
@@ -275,7 +277,12 @@ function updatePlayBtnState() {
 
 function loadMusic(index) {
     musicIndex = index; hasCountedPlay = false; const song = songs[musicIndex]; 
-    music.src = song.path; title.textContent = song.displayName; artist.textContent = song.artist; 
+    music.src = song.path;
+    
+    // Đảm bảo tốc độ bài hát được giữ nguyên khi chuyển bài
+    music.playbackRate = parseFloat(speedSlider.value); 
+    
+    title.textContent = song.displayName; artist.textContent = song.artist; 
     document.getElementById('track-count').textContent = `TRACK ${musicIndex + 1} OF ${songs.length}`;
 
     if (songJournals[song.id]) setTimeout(() => { showToast(`📝 Note: ${songJournals[song.id]}`); }, 1000);
@@ -385,6 +392,13 @@ sleepSlider.addEventListener('change', (e) => {
     
     countdownInterval = setInterval(() => { remainingSecs--; if (remainingSecs <= 0) clearInterval(countdownInterval); }, 1000);
     sleepTimer = setTimeout(() => { fadeOutAndPause(3000); showToast('Sleep timer reached. Goodnight!'); sleepSlider.value = 0; timerDisplay.textContent = '0 min'; }, minutes * 60 * 1000);
+});
+
+// SỰ KIỆN ĐỔI TỐC ĐỘ BÀI HÁT
+speedSlider.addEventListener('input', (e) => {
+    const speed = parseFloat(e.target.value);
+    music.playbackRate = speed;
+    speedDisplay.textContent = speed + 'x';
 });
 
 playBtnWrapper.addEventListener('click', togglePlay); prevBtn.addEventListener('click', () => changeMusic(-1)); nextBtn.addEventListener('click', () => changeMusic(1));

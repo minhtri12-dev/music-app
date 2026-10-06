@@ -118,6 +118,17 @@
                     <button class="setting-btn particle-btn interactive-hover" data-particle="snow">Snow</button>
                 </div>
 
+                <!-- TỐC ĐỘ BÀI HÁT THÊM VÀO ĐÂY -->
+                <h4 style="margin-top: 25px;"><i class="fa-solid fa-gauge-high"></i> Playback Speed</h4>
+                <div class="sleep-timer-wrapper" style="margin-bottom: 0;">
+                    <input type="range" id="speed-slider" min="0.25" max="2" step="0.25" value="1">
+                    <div class="sleep-timer-labels">
+                        <span>0.25x</span>
+                        <span id="speed-display" style="color: #fff; font-weight: 600; position: absolute; left: 42.85%; transform: translateX(-50%);">1x</span>
+                        <span>2x</span>
+                    </div>
+                </div>
+
                 <h4 style="margin-top: 25px;"><i class="fa-solid fa-stopwatch"></i> Sleep Timer</h4>
                 <div class="sleep-timer-wrapper">
                     <input type="range" id="sleep-slider" min="0" max="60" step="5" value="0">
