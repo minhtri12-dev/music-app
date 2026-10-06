@@ -293,47 +293,74 @@ body {
 #volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #fff; border-radius: 50%; cursor: pointer; box-shadow: 0 0 8px rgba(0,0,0,0.8); }
 
 @media screen and (max-width: 600px) {
-    body { padding: 0; overflow-y: auto; } /* Cho phép vuốt cuộn màn hình trên điện thoại */
-    
-    .app-layout { gap: 0; width: 100vw; min-height: 100dvh; height: auto; flex-direction: column; }
-    
-    .glass-player { 
-        width: 100vw; min-height: 100dvh; height: auto; 
-        padding: 40px 25px 120px; /* Tăng khoảng trống bên dưới để không bị che bởi thanh Safari */
+    /* 1. MỞ KHÓA CUỘN TRANG (Giải phóng body khỏi Flexbox và 100vh của PC) */
+    html, body {
+        height: auto !important;
+        min-height: 100dvh !important;
+        display: block !important; 
+        overflow-x: hidden !important;
+        overflow-y: auto !important; 
+        padding: 0 !important;
+    }
+
+    /* 2. SẮP XẾP LẠI KHUNG GIAO DIỆN */
+    .app-layout {
+        gap: 0; width: 100vw;
+        height: auto; min-height: 100dvh;
+        display: flex; flex-direction: column;
+    }
+
+    .glass-player {
+        width: 100vw; height: auto; min-height: 100dvh;
+        /* Đệm đáy siêu dày (130px) để né triệt để thanh điều hướng của Safari/Chrome */
+        padding: 40px 20px 130px 20px !important;
         background: transparent; backdrop-filter: none; border: none; border-radius: 0; box-shadow: none;
-        justify-content: flex-start; gap: 40px; 
+        display: flex; flex-direction: column; justify-content: space-between;
     }
-    
-    .center-info { flex: none; margin-bottom: 10px; } /* Nhường không gian cho phần control bên dưới */
-    .modern-cd { width: 160px !important; height: 160px !important; margin-top: 20px; }
-    .song-title { font-size: 36px; }
-    
-    .side-playlist {
-        position: fixed !important; top: auto; bottom: 0; left: 0;
-        width: 100vw !important; height: 88dvh !important; max-width: none !important;
-        background: transparent !important;
-        backdrop-filter: none; -webkit-backdrop-filter: none;
-        border: none;
-        border-radius: 24px 24px 0 0;
-        z-index: 1000;
-        transform: translateY(100%); opacity: 1; visibility: visible;
-        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        padding: 10px 0; display: flex; flex-direction: column;
-        box-shadow: none;
+
+    /* 3. TINH CHỈNH KHU VỰC THÔNG TIN BÀI HÁT */
+    .center-info {
+        flex: 1; display: flex; flex-direction: column; justify-content: center;
+        margin-bottom: 20px;
     }
-    .side-playlist.active { transform: translateY(0); }
-    .close-drawer-btn { display: block; }
-    
-    /* SẮP XẾP LẠI KHU VỰC NÚT BẤM VÀ ÂM LƯỢNG */
-    .controls-row { 
-        flex-direction: column; /* Xếp dọc các thành phần */
-        gap: 30px; /* Khoảng cách giữa nút Play và thanh Âm lượng */
+    .modern-cd {
+        width: 200px !important; height: 200px !important;
+        margin: 10px auto 20px auto;
     }
-    .volume-control { 
-        position: relative !important; right: auto !important; 
-        width: 80% !important; /* Làm thanh âm lượng dài ra và căn giữa */
-        display: flex; /* Xóa display: none cũ để hiển thị loa */
+    .song-title {
+        font-size: 36px;
+        white-space: normal; /* Cho phép rớt dòng nếu tên bài hát quá dài */
+        line-height: 1.15;
+        padding: 0 10px;
+    }
+
+    /* 4. HIỂN THỊ LẠI ÂM LƯỢNG VÀ XẾP DỌC NÚT BẤM */
+    .controls-row {
+        flex-direction: column; /* Xếp dọc dải điều khiển và âm lượng */
+        gap: 40px; /* Cách xa nhau ra để tránh bấm nhầm */
+        margin-top: 15px;
+    }
+    .volume-control {
+        position: relative !important; right: auto !important;
+        width: 85% !important;
+        display: flex !important; /* Xóa display: none cũ để hiện lại loa */
         justify-content: center;
         margin: 0 auto;
     }
+
+    /* 5. MENU PLAYLIST TRƯỢT LÊN */
+    .side-playlist {
+        position: fixed !important; top: auto; bottom: 0; left: 0;
+        width: 100vw !important; height: 85dvh !important; max-width: none !important;
+        background: rgba(15, 15, 15, 0.95) !important; /* Nền tối để dễ đọc chữ trên điện thoại */
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border: none; border-radius: 24px 24px 0 0;
+        z-index: 9999;
+        transform: translateY(100%); opacity: 1; visibility: visible;
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        padding: 10px 0 30px; display: flex; flex-direction: column;
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+    }
+    .side-playlist.active { transform: translateY(0); }
+    .close-drawer-btn { display: block; padding: 10px; margin-right: -5px; }
 }
