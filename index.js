@@ -52,6 +52,9 @@ const title = document.getElementById('music-title'),
     speedDisplay = document.getElementById('speed-display');
 
 const music = new Audio();
+const compactQuery = window.matchMedia('(max-width: 900px), (max-height: 520px)');
+const volumeAdjustable = (() => { const probe = new Audio(); probe.volume = 0.5; return probe.volume === 0.5; })();
+if (!volumeAdjustable) document.documentElement.classList.add('no-volume-control');
 
 // DANH SÁCH BÀI HÁT
 const rawSongs = [
@@ -180,17 +183,24 @@ let hideUITimer;
 function resetHideUI() {
     if (isZenMode) return;
     appLayout.classList.remove('auto-hidden'); document.body.style.cursor = 'default'; clearTimeout(hideUITimer);
-    if (!music.paused) hideUITimer = setTimeout(() => { appLayout.classList.add('auto-hidden'); document.body.style.cursor = 'none'; }, 3000);
+    if (!music.paused) hideUITimer = setTimeout(() => {
+        if (compactQuery.matches && playlistDrawer.classList.contains('active')) return;
+        appLayout.classList.add('auto-hidden'); document.body.style.cursor = 'none';
+    }, 3000);
 }
-['mousemove', 'touchstart', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, resetHideUI));
+['mousemove', 'touchstart', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, resetHideUI, { passive: true }));
 music.addEventListener('play', resetHideUI); music.addEventListener('pause', () => { clearTimeout(hideUITimer); appLayout.classList.remove('auto-hidden'); document.body.style.cursor = 'default'; });
+
+let tapRevealedUI = false;
+document.addEventListener('pointerdown', () => { tapRevealedUI = appLayout.classList.contains('auto-hidden'); }, true);
+document.addEventListener('click', (e) => { if (tapRevealedUI) { tapRevealedUI = false; e.stopPropagation(); e.preventDefault(); } }, true);
 
 // PARTICLES
 const canvas = document.getElementById('particle-canvas'), ctx = canvas.getContext('2d');
 let particlesArray = [];
 function initParticles() {
     canvas.width = window.innerWidth; canvas.height = window.innerHeight; particlesArray = [];
-    let numParticles = window.innerWidth < 600 ? 30 : 80;
+    let numParticles = compactQuery.matches ? 30 : 80;
     if (currentParticle === 'snow') numParticles = 50; if (currentParticle === 'rain') numParticles = 100;
     for (let i = 0; i < numParticles; i++) {
         let size = Math.random() * 1.5 + 0.5, x = Math.random() * innerWidth, y = Math.random() * innerHeight, speedX = (Math.random() - 0.5) * 0.5, speedY = (Math.random() - 1) * 0.5;
@@ -209,7 +219,12 @@ function animateParticles() {
         if (p.x > canvas.width) p.x = 0; if (p.x < 0) p.x = canvas.width;
     }); requestAnimationFrame(animateParticles);
 }
-window.addEventListener('resize', initParticles); animateParticles();
+let lastViewportWidth = window.innerWidth;
+window.addEventListener('resize', () => {
+    if (window.innerWidth !== lastViewportWidth) { lastViewportWidth = window.innerWidth; initParticles(); }
+    else { canvas.height = window.innerHeight; }
+});
+animateParticles();
 
 document.querySelectorAll('.particle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -260,6 +275,7 @@ setInterval(savePlayerState, 2000);
 
 // PLAY/PAUSE
 function fadeOutAndPause(durationMs = 800) {
+    if (!volumeAdjustable) { music.pause(); updatePlayBtnState(); return; }
     if (fadeInterval) clearInterval(fadeInterval); const step = music.volume / (durationMs / 50), currentVol = music.volume;
     fadeInterval = setInterval(() => { if (music.volume - step > 0) music.volume -= step; else { music.volume = 0; music.pause(); clearInterval(fadeInterval); music.volume = currentVol; updatePlayBtnState(); } }, 50);
 }
@@ -363,7 +379,7 @@ function renderPlaylist() {
         
         item.querySelector('.track-info').addEventListener('click', () => { 
             loadMusic(originalIndex); playMusic(); 
-            if (window.innerWidth <= 600) playlistDrawer.classList.remove('active');
+            if (compactQuery.matches) playlistDrawer.classList.remove('active');
         });
         
         item.querySelector('.journal-btn').addEventListener('click', (e) => { e.stopPropagation(); openJournalModal(song.id); });
@@ -373,8 +389,28 @@ function renderPlaylist() {
 }
 
 // VOLUME & TIMERS
-music.addEventListener('timeupdate', () => { const { duration, currentTime } = music; if (isNaN(duration)) return; progress.style.width = `${(currentTime / duration) * 100}%`; currentTimeEl.textContent = formatTime(currentTime); durationEl.textContent = "-" + formatTime(duration - currentTime); });
-playerProgress.addEventListener('click', (e) => music.currentTime = (e.offsetX / playerProgress.clientWidth) * music.duration);
+let isSeeking = false, seekRatio = 0;
+music.addEventListener('timeupdate', () => { if (isSeeking) return; const { duration, currentTime } = music; if (isNaN(duration)) return; progress.style.width = `${(currentTime / duration) * 100}%`; currentTimeEl.textContent = formatTime(currentTime); durationEl.textContent = "-" + formatTime(duration - currentTime); });
+
+function previewSeek(e) {
+    const rect = playerProgress.getBoundingClientRect();
+    if (!rect.width) return;
+    seekRatio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    progress.style.width = `${seekRatio * 100}%`;
+    currentTimeEl.textContent = formatTime(seekRatio * music.duration);
+    durationEl.textContent = "-" + formatTime(music.duration - seekRatio * music.duration);
+}
+playerProgress.addEventListener('pointerdown', (e) => {
+    if (!isFinite(music.duration)) return;
+    isSeeking = true; playerProgress.setPointerCapture(e.pointerId); previewSeek(e);
+});
+playerProgress.addEventListener('pointermove', (e) => { if (isSeeking) previewSeek(e); });
+playerProgress.addEventListener('pointerup', () => {
+    if (!isSeeking) return;
+    isSeeking = false; music.currentTime = seekRatio * music.duration;
+});
+playerProgress.addEventListener('pointercancel', () => { isSeeking = false; });
+
 function setVolumeIcon(vol) { volumeIcon.className = 'fa-solid ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high')); }
 volumeSlider.addEventListener('input', (e) => { const vol = parseFloat(e.target.value); music.volume = vol; if (vol > 0) previousVolume = vol; setVolumeIcon(vol); savePlayerState(); });
 volumeIcon.addEventListener('click', () => { if (music.volume > 0) { previousVolume = music.volume; music.volume = 0; volumeSlider.value = 0; showToast('Muted'); } else { music.volume = previousVolume; volumeSlider.value = previousVolume; showToast(`Volume ${Math.round(previousVolume * 100)}%`); } setVolumeIcon(music.volume); savePlayerState(); });
@@ -411,6 +447,13 @@ repeatBtn.addEventListener('click', () => { isRepeat = !isRepeat; repeatBtn.clas
 // UI TOGGLES & SHORTCUTS
 playlistToggleBtn.addEventListener('click', () => playlistDrawer.classList.toggle('active')); 
 closeDrawerBtn.addEventListener('click', () => playlistDrawer.classList.remove('active'));
+
+document.addEventListener('click', (e) => {
+    if (!compactQuery.matches || !playlistDrawer.classList.contains('active')) return;
+    const path = e.composedPath();
+    if (path.includes(playlistDrawer) || path.includes(playlistToggleBtn) || e.target.closest('.modal-overlay')) return;
+    playlistDrawer.classList.remove('active');
+});
 
 tabBtns.forEach(btn => { 
     btn.addEventListener('click', () => { 
