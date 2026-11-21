@@ -58,6 +58,11 @@ if (!volumeAdjustable) document.documentElement.classList.add('no-volume-control
 
 // DANH SÁCH BÀI HÁT
 const rawSongs = [
+    {  path: './assets/nganhangnoinho.mp3', displayName: 'NGAN HANG NOI NHO', artist: 'SoundCloud', bgVideo: './assets/zz.png' },
+    {  path: './assets/henem.mp3', displayName: 'HEN EM O LAN YEU THU2', artist: 'SoundCloud', bgVideo: './assets/32.png' },
+    {  path: './assets/dang1.mp3', displayName: 'DE DANH CHO EM', artist: 'SoundCloud', bgVideo: './assets/10.png' },
+    {  path: './assets/hung1.mp3', displayName: 'TE THAT', artist: 'SoundCloud', bgVideo: './assets/32.png' },
+    {  path: './assets/nguoidung.mp3', displayName: 'NGUOI DUNG', artist: 'SoundCloud', bgVideo: './assets/35.png' },
     {  path: './assets/timem1.mp3', displayName: 'TIM EM', artist: 'SoundCloud', bgVideo: './assets/100.mp4' },
     {  path: './assets/full.mp3', displayName: 'MCK LIST', artist: 'MCK', bgVideo: './assets/1.mp4' },
     {  path: './assets/bwine.mp3', displayName: 'VÀI TRACK BWINE', artist: 'BWINE', bgVideo: './assets/2.mp4' },
