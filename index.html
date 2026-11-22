@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Font tên bài hát: Cormorant Garamond SemiBold Italic. Font giao diện: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="cases.css">
     <link rel="icon" type="image/png" href="assets/music.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <title>MUSIC APP WITH MY FRIEND | BY NMT</title>
@@ -207,7 +207,21 @@
             </div>
         </div>
     </div>
+
+    <!-- MODE SWITCHER -->
+    <nav class="mode-switcher" id="mode-switcher" data-mode="music" aria-label="Mode">
+        <div class="mode-switcher-track" role="tablist">
+            <span class="mode-switcher-thumb" aria-hidden="true"></span>
+            <button type="button" class="mode-btn active" data-mode="music" role="tab" aria-selected="true"><i class="fa-solid fa-music"></i><span>MUSIC</span></button>
+            <button type="button" class="mode-btn" data-mode="cases" role="tab" aria-selected="false"><i class="fa-solid fa-folder-open"></i><span>CASE FILES</span></button>
+        </div>
+    </nav>
+
+    <!-- CASE FILES -->
+    <main class="cf-root" id="case-files" aria-hidden="true" inert></main>
     
     <script src="index.js"></script>
+    <script src="cases-data.js"></script>
+    <script src="cases.js"></script>
 </body>
 </html>

@@ -58,6 +58,7 @@ if (!volumeAdjustable) document.documentElement.classList.add('no-volume-control
 
 // DANH SÁCH BÀI HÁT
 const rawSongs = [
+    {  path: './assets/coconyeuem.m4a', displayName: 'CO CON YEU EM', artist: 'SoundCloud', bgVideo: './assets/zz.png' },
     {  path: './assets/nganhangnoinho.mp3', displayName: 'NGAN HANG NOI NHO', artist: 'SoundCloud', bgVideo: './assets/zz.png' },
     {  path: './assets/henem.mp3', displayName: 'HEN EM O LAN YEU THU2', artist: 'SoundCloud', bgVideo: './assets/32.png' },
     {  path: './assets/dang1.mp3', displayName: 'DE DANH CHO EM', artist: 'SoundCloud', bgVideo: './assets/10.png' },
