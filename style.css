@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&display=swap');
+
 :root {
     --crystal-bg: rgba(255, 255, 255, 0.005);
     --crystal-border: rgba(255, 255, 255, 0.25);
@@ -360,7 +362,7 @@ button, input, textarea { font-family: inherit; }
 }
 
 .controls-row { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
-.main-controls { display: flex; align-items: center; gap: 8px; }
+.main-controls { display: flex; align-items: center; gap: 6px; }
 
 /* ICON BUTTONS */
 .main-controls > i, #playlist-toggle-btn, #share-card-trigger, .close-drawer-btn, .favorite-btn, .journal-btn, #volume-icon {
@@ -393,30 +395,20 @@ button, input, textarea { font-family: inherit; }
 .journal-btn.has-note, .journal-btn.has-note:hover { color: #60a5fa; }
 .journal-btn.has-note { background-color: rgba(96, 165, 250, 0.12); }
 
-/* PLAY BUTTON */
+/* PLAY BUTTON (GIỮ NHƯ BẢN GỐC) */
 .play-btn-wrapper {
-    position: relative; isolation: isolate; overflow: hidden; box-sizing: border-box;
-    width: 60px; height: 60px; margin: 0 10px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    background-color: #78E7F5; background-image: var(--accent-gradient);
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -6px 12px rgba(120, 100, 230, 0.25), 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 26px rgba(120, 231, 245, 0.35);
-}
-.play-btn-wrapper::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
-    background: radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 58%);
+    width: 60px; height: 60px; margin: 0 6px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 @media (hover: hover) {
-    .play-btn-wrapper:hover {
-        transform: translateY(-2px) scale(1.04); filter: brightness(1.07) saturate(1.05);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -6px 12px rgba(120, 100, 230, 0.25), 0 14px 34px rgba(0, 0, 0, 0.4), 0 0 36px rgba(120, 231, 245, 0.55), 0 0 56px rgba(167, 139, 250, 0.28);
-    }
+    .play-btn-wrapper:hover { transform: scale(1.1); box-shadow: 0 0 30px rgba(255,255,255,0.7); }
 }
-.play-btn-wrapper i { color: #0b1020; font-size: 20px; margin-left: 3px; text-shadow: none; }
+.play-btn-wrapper i { color: #000; font-size: 20px; margin-left: 3px; text-shadow: none; }
 .play-btn-wrapper i.fa-pause { margin-left: 0; }
 
-.volume-control { position: absolute; right: 0; display: flex; align-items: center; gap: 6px; width: 88px; }
-.no-volume-control .volume-control { display: none; }
+.volume-control { position: absolute; right: 0; display: flex; align-items: center; gap: 4px; width: 80px; }
+.no-volume-control #volume-slider { display: none; }
+.no-volume-control .volume-control { justify-content: flex-end; }
 #volume-slider { -webkit-appearance: none; width: 100%; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; outline: none; transition: 0.3s; }
 @media (hover: hover) {
     #volume-slider:hover { background: rgba(255,255,255,0.8); }
@@ -433,10 +425,7 @@ button, input, textarea { font-family: inherit; }
 }
 .main-controls > i:active, #playlist-toggle-btn:active, #share-card-trigger:active, .close-drawer-btn:active,
 .favorite-btn:active, .journal-btn:active, #volume-icon:active { background-color: rgba(255, 255, 255, 0.2); }
-.play-btn-wrapper:active {
-    transform: scale(0.94); filter: brightness(0.96);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -4px 8px rgba(120, 100, 230, 0.3), 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 16px rgba(120, 231, 245, 0.3);
-}
+.play-btn-wrapper:active { transform: scale(0.94); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
 
 .interactive-hover:focus-visible, .setting-btn:focus-visible, .tab-btn:focus-visible, button:focus-visible {
     outline: 2px solid var(--cyan); outline-offset: 2px;
@@ -555,6 +544,7 @@ button:disabled, .setting-btn:disabled, .tab-btn:disabled, [aria-disabled="true"
     .play-btn-wrapper i { font-size: 24px; }
 
     .volume-control { position: relative; right: auto; width: 100%; max-width: 320px; height: var(--m-tap); margin: 0 auto; gap: 8px; }
+    .no-volume-control .volume-control { justify-content: center; }
     #volume-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--m-tap); height: var(--m-tap); font-size: 16px; }
     #volume-slider, #volume-slider:hover { flex: 1; min-width: 0; width: auto; height: 28px; background: transparent; }
     #volume-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); }

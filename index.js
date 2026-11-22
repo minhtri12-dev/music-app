@@ -280,16 +280,17 @@ setInterval(savePlayerState, 2000);
 
 // PLAY/PAUSE
 function fadeOutAndPause(durationMs = 800) {
-    if (!volumeAdjustable) { music.pause(); updatePlayBtnState(); return; }
-    if (fadeInterval) clearInterval(fadeInterval); const step = music.volume / (durationMs / 50), currentVol = music.volume;
-    fadeInterval = setInterval(() => { if (music.volume - step > 0) music.volume -= step; else { music.volume = 0; music.pause(); clearInterval(fadeInterval); music.volume = currentVol; updatePlayBtnState(); } }, 50);
+    if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
+    if (!volumeAdjustable || music.muted || music.volume === 0) { music.pause(); updatePlayBtnState(); return; }
+    const step = music.volume / (durationMs / 50), currentVol = music.volume;
+    fadeInterval = setInterval(() => { if (music.volume - step > 0) music.volume -= step; else { music.volume = 0; music.pause(); clearInterval(fadeInterval); fadeInterval = null; music.volume = currentVol; updatePlayBtnState(); } }, 50);
 }
 function togglePlay() { 
-    if (fadeInterval) { clearInterval(fadeInterval); music.volume = previousVolume > 0 ? previousVolume : 1; }
+    if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; if (volumeAdjustable) music.volume = previousVolume > 0 ? previousVolume : 1; }
     if (music.paused) playMusic(); else fadeOutAndPause(500); 
 }
 function playMusic() {
-    if (fadeInterval) { clearInterval(fadeInterval); music.volume = previousVolume > 0 ? previousVolume : 1; }
+    if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; if (volumeAdjustable) music.volume = previousVolume > 0 ? previousVolume : 1; }
     music.play().then(() => updatePlayBtnState()).catch(e => console.log(e)); 
     if(currentTab !== 'settings') renderPlaylist();
 }
@@ -298,6 +299,8 @@ function updatePlayBtnState() {
     else { playBtn.classList.replace('fa-play', 'fa-pause'); playBtn.setAttribute('title', 'Pause'); cdElement.classList.add('playing'); }
     savePlayerState();
 }
+music.addEventListener('play', updatePlayBtnState);
+music.addEventListener('pause', updatePlayBtnState);
 
 function loadMusic(index) {
     musicIndex = index; hasCountedPlay = false; const song = songs[musicIndex]; 
@@ -416,9 +419,17 @@ playerProgress.addEventListener('pointerup', () => {
 });
 playerProgress.addEventListener('pointercancel', () => { isSeeking = false; });
 
-function setVolumeIcon(vol) { volumeIcon.className = 'fa-solid ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high')); }
+function setVolumeIcon(vol) { volumeIcon.className = 'fa-solid interactive-hover ' + (vol === 0 ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high')); }
 volumeSlider.addEventListener('input', (e) => { const vol = parseFloat(e.target.value); music.volume = vol; if (vol > 0) previousVolume = vol; setVolumeIcon(vol); savePlayerState(); });
-volumeIcon.addEventListener('click', () => { if (music.volume > 0) { previousVolume = music.volume; music.volume = 0; volumeSlider.value = 0; showToast('Muted'); } else { music.volume = previousVolume; volumeSlider.value = previousVolume; showToast(`Volume ${Math.round(previousVolume * 100)}%`); } setVolumeIcon(music.volume); savePlayerState(); });
+volumeIcon.addEventListener('click', () => {
+    if (!volumeAdjustable) {
+        music.muted = !music.muted;
+        setVolumeIcon(music.muted ? 0 : 1);
+        showToast(music.muted ? 'Muted' : 'Unmuted');
+        return;
+    }
+    if (music.volume > 0) { previousVolume = music.volume; music.volume = 0; volumeSlider.value = 0; showToast('Muted'); } else { music.volume = previousVolume; volumeSlider.value = previousVolume; showToast(`Volume ${Math.round(previousVolume * 100)}%`); } setVolumeIcon(music.volume); savePlayerState();
+});
 
 sleepSlider.addEventListener('input', (e) => {
     const minutes = parseInt(e.target.value);
